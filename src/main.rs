@@ -3,9 +3,19 @@ use bevy::window::WindowResolution;
 
 const SCREEN_WIDTH: f32 = 720.;
 const SCREEN_HEIGHT: f32 = 480.;
-const PLAYER_HEIGHT: f32 = 64.;
-const PLAYER_WIDTH: f32 = 32.;
+const PADDLE_HEIGHT: f32 = 64.;
+const PADDLE_WIDTH: f32 = 32.;
+const PADDLE_SPEED: f32 = 1024.;
 const BALL_SIZE: f32 = 16.;
+const BALL_INITIAL_SPEED: f32 = 300.;
+const BALL_MAX_SPEED: f32 = 800.;
+const BALL_MULTIPLIER: f32 = 1.01;
+
+const DEMI_SCREEN_WIDTH: f32 = SCREEN_WIDTH / 2.;
+const DEMI_SCREEN_HEIGHT: f32 = SCREEN_HEIGHT / 2.;
+const DEMI_PADDLE_WIDTH: f32 = PADDLE_WIDTH / 2.;
+const DEMI_PADDLE_HEIGHT: f32 = PADDLE_HEIGHT / 2.;
+const DEMI_BALL_SIZE: f32 = BALL_SIZE / 2.;
 
 fn main() {
     let mut app = App::new();
@@ -20,7 +30,14 @@ fn main() {
 
     app.add_systems(Startup, (setup_camera, spawn_player, spawn_ai, spawn_ball));
 
-    app.add_systems(Update, (move_player, move_ball));
+    app.add_systems(
+        Update,
+        (
+            move_player,
+            move_ball,
+            handle_ball_collisions.after(move_ball),
+        ),
+    );
 
     app.run();
 }
@@ -53,10 +70,10 @@ fn spawn_player(mut commands: Commands) {
     commands.spawn((
         Player,
         Health(10),
-        Transform::from_xyz(-SCREEN_WIDTH / 2. + PLAYER_WIDTH, 0.0, 0.0),
+        Transform::from_xyz(-DEMI_SCREEN_WIDTH + PADDLE_WIDTH, 0.0, 0.0),
         Sprite {
             color: Color::srgb(0.5, 0.5, 0.5),
-            custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
+            custom_size: Some(Vec2::new(PADDLE_WIDTH, PADDLE_HEIGHT)),
             ..default()
         },
     ));
@@ -66,10 +83,10 @@ fn spawn_ai(mut commands: Commands) {
     commands.spawn((
         Ai,
         Health(10),
-        Transform::from_xyz(328.0, 0.0, 0.0),
+        Transform::from_xyz(DEMI_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
         Sprite {
             color: Color::srgb(0.5, 0.5, 0.5),
-            custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
+            custom_size: Some(Vec2::new(PADDLE_WIDTH, PADDLE_HEIGHT)),
             ..default()
         },
     ));
@@ -86,7 +103,7 @@ fn spawn_ball(mut commands: Commands) {
             )
             .normalize(),
         ),
-        Speed(100.),
+        Speed(BALL_INITIAL_SPEED),
         Sprite {
             color: Color::srgb(1.0, 1.0, 1.0),
             custom_size: Some(Vec2::new(BALL_SIZE, BALL_SIZE)),
@@ -100,31 +117,85 @@ fn move_player(
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<Player>>,
 ) {
-    const SPEED: f32 = 256.;
     for mut player_transform in query.iter_mut() {
         if input.pressed(KeyCode::ArrowUp) {
             player_transform.translation.y =
-                (player_transform.translation.y + SPEED * time.delta_secs()).clamp(
-                    -SCREEN_HEIGHT / 2. + PLAYER_HEIGHT / 2.,
-                    SCREEN_HEIGHT / 2. - PLAYER_HEIGHT / 2.,
+                (player_transform.translation.y + PADDLE_SPEED * time.delta_secs()).clamp(
+                    -DEMI_SCREEN_HEIGHT + DEMI_PADDLE_HEIGHT,
+                    DEMI_SCREEN_HEIGHT - DEMI_PADDLE_HEIGHT,
                 );
         }
         if input.pressed(KeyCode::ArrowDown) {
             player_transform.translation.y =
-                (player_transform.translation.y - SPEED * time.delta_secs()).clamp(
-                    -SCREEN_HEIGHT / 2. + PLAYER_HEIGHT / 2.,
-                    SCREEN_HEIGHT / 2. - PLAYER_HEIGHT / 2.,
+                (player_transform.translation.y - PADDLE_SPEED * time.delta_secs()).clamp(
+                    -DEMI_SCREEN_HEIGHT + DEMI_PADDLE_HEIGHT,
+                    DEMI_SCREEN_HEIGHT - DEMI_PADDLE_HEIGHT,
                 );
         }
     }
 }
 
-fn move_ball(
-    time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut Direction, &Speed), With<Ball>>,
-) {
-    for (mut ball_transform, mut ball_direction, speed) in query.iter_mut() {
+fn move_ball(time: Res<Time>, mut query: Query<(&mut Transform, &Direction, &Speed), With<Ball>>) {
+    for (mut ball_transform, ball_direction, speed) in query.iter_mut() {
         ball_transform.translation.x += ball_direction.0.x * speed.0 * time.delta_secs();
         ball_transform.translation.y += ball_direction.0.y * speed.0 * time.delta_secs();
+    }
+}
+
+fn handle_ball_collisions(
+    mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,
+    paddle_query: Query<&Transform, (Or<(With<Player>, With<Ai>)>, Without<Ball>)>,
+) {
+    for (mut ball_transform, mut ball_direction, mut ball_speed) in ball_query.iter_mut() {
+        // Paddles collision
+        for paddle_transform in paddle_query.iter() {
+            let dx = (ball_transform.translation.x - paddle_transform.translation.x).abs();
+            let dy = (ball_transform.translation.y - paddle_transform.translation.y).abs();
+            let overlap_x = DEMI_BALL_SIZE + DEMI_PADDLE_WIDTH - dx;
+            let overlap_y = DEMI_BALL_SIZE + DEMI_PADDLE_HEIGHT - dy;
+
+            let to_paddle = (paddle_transform.translation - ball_transform.translation).truncate();
+            if ball_direction.0.dot(to_paddle) <= 0. {
+                continue;
+            }
+
+            if dx < DEMI_BALL_SIZE + DEMI_PADDLE_WIDTH && dy < DEMI_BALL_SIZE + DEMI_PADDLE_HEIGHT {
+                let side_x =
+                    (ball_transform.translation.x - paddle_transform.translation.x).signum();
+                let side_y =
+                    (ball_transform.translation.y - paddle_transform.translation.y).signum();
+                if overlap_x < overlap_y {
+                    ball_direction.0.x *= -1.;
+                    ball_transform.translation.x = paddle_transform.translation.x
+                        + (DEMI_PADDLE_WIDTH + DEMI_BALL_SIZE) * side_x;
+                } else {
+                    ball_direction.0.y *= -1.;
+                    ball_transform.translation.y = paddle_transform.translation.y
+                        + (DEMI_PADDLE_HEIGHT + DEMI_BALL_SIZE) * side_y;
+                }
+            }
+        }
+
+        // Walls collision
+        if ball_transform.translation.x < -DEMI_SCREEN_WIDTH + DEMI_BALL_SIZE {
+            ball_transform.translation.x = -DEMI_SCREEN_WIDTH + DEMI_BALL_SIZE;
+            ball_direction.0.x *= -1.;
+            ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
+        }
+        if ball_transform.translation.x > DEMI_SCREEN_WIDTH - DEMI_BALL_SIZE {
+            ball_transform.translation.x = DEMI_SCREEN_WIDTH - DEMI_BALL_SIZE;
+            ball_direction.0.x *= -1.;
+            ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
+        }
+        if ball_transform.translation.y < -DEMI_SCREEN_HEIGHT + DEMI_BALL_SIZE {
+            ball_transform.translation.y = -DEMI_SCREEN_HEIGHT + DEMI_BALL_SIZE;
+            ball_direction.0.y *= -1.;
+            ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
+        }
+        if ball_transform.translation.y > DEMI_SCREEN_HEIGHT - DEMI_BALL_SIZE {
+            ball_transform.translation.y = DEMI_SCREEN_HEIGHT - DEMI_BALL_SIZE;
+            ball_direction.0.y *= -1.;
+            ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
+        }
     }
 }
