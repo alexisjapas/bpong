@@ -14,6 +14,8 @@ fn main() {
 
     app.add_systems(Startup, (setup_camera, spawn_player));
 
+    app.add_systems(Update, move_player);
+
     app.run();
 }
 
@@ -42,4 +44,18 @@ fn spawn_player(mut commands: Commands) {
     ));
 }
 
-//fn move()
+fn move_player(
+    time: Res<Time>,
+    input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<&mut Transform, With<Player>>,
+) {
+    const SPEED: f32 = 256.;
+    for mut player_transform in query.iter_mut() {
+        if input.pressed(KeyCode::ArrowUp) {
+            player_transform.translation.y += SPEED * time.delta_secs();
+        }
+        if input.pressed(KeyCode::ArrowDown) {
+            player_transform.translation.y -= SPEED * time.delta_secs();
+        }
+    }
+}
