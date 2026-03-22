@@ -20,7 +20,7 @@ fn main() {
 
     app.add_systems(Startup, (setup_camera, spawn_player, spawn_ai, spawn_ball));
 
-    app.add_systems(Update, move_player);
+    app.add_systems(Update, (move_player, move_ball));
 
     app.run();
 }
@@ -37,6 +37,12 @@ struct Ball;
 
 #[derive(Component)]
 struct Health(u32);
+
+#[derive(Component)]
+struct Direction(Vec2);
+
+#[derive(Component)]
+struct Speed(f32);
 
 // Systems
 fn setup_camera(mut commands: Commands) {
@@ -73,6 +79,14 @@ fn spawn_ball(mut commands: Commands) {
     commands.spawn((
         Ball,
         Transform::from_xyz(0.0, 0.0, 0.0),
+        Direction(
+            Vec2::new(
+                rand::random_range(-1.0..=1.0),
+                rand::random_range(-1.0..=1.0),
+            )
+            .normalize(),
+        ),
+        Speed(100.),
         Sprite {
             color: Color::srgb(1.0, 1.0, 1.0),
             custom_size: Some(Vec2::new(BALL_SIZE, BALL_SIZE)),
@@ -102,5 +116,15 @@ fn move_player(
                     SCREEN_HEIGHT / 2. - PLAYER_HEIGHT / 2.,
                 );
         }
+    }
+}
+
+fn move_ball(
+    time: Res<Time>,
+    mut query: Query<(&mut Transform, &mut Direction, &Speed), With<Ball>>,
+) {
+    for (mut ball_transform, mut ball_direction, speed) in query.iter_mut() {
+        ball_transform.translation.x += ball_direction.0.x * speed.0 * time.delta_secs();
+        ball_transform.translation.y += ball_direction.0.y * speed.0 * time.delta_secs();
     }
 }
