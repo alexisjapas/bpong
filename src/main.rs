@@ -3,12 +3,12 @@ use bevy::window::WindowResolution;
 
 const SCREEN_WIDTH: f32 = 720.;
 const SCREEN_HEIGHT: f32 = 480.;
-const PADDLE_HEIGHT: f32 = 64.;
+const PADDLE_HEIGHT: f32 = 256.;
 const PADDLE_WIDTH: f32 = 32.;
 const PADDLE_SPEED: f32 = 1024.;
 const BALL_SIZE: f32 = 16.;
 const BALL_INITIAL_SPEED: f32 = 300.;
-const BALL_MAX_SPEED: f32 = 800.;
+const BALL_MAX_SPEED: f32 = 4096.;
 const BALL_MULTIPLIER: f32 = 1.01;
 
 const DEMI_SCREEN_WIDTH: f32 = SCREEN_WIDTH / 2.;
@@ -154,22 +154,35 @@ fn handle_ball_collisions(
             let overlap_x = DEMI_BALL_SIZE + DEMI_PADDLE_WIDTH - dx;
             let overlap_y = DEMI_BALL_SIZE + DEMI_PADDLE_HEIGHT - dy;
 
-            let to_paddle = (paddle_transform.translation - ball_transform.translation).truncate();
-            if ball_direction.0.dot(to_paddle) <= 0. {
-                continue;
-            }
-
             if dx < DEMI_BALL_SIZE + DEMI_PADDLE_WIDTH && dy < DEMI_BALL_SIZE + DEMI_PADDLE_HEIGHT {
-                let side_x =
-                    (ball_transform.translation.x - paddle_transform.translation.x).signum();
-                let side_y =
-                    (ball_transform.translation.y - paddle_transform.translation.y).signum();
+                let is_left_paddle = paddle_transform.translation.x < 0.0;
+                if is_left_paddle && ball_direction.0.x > 0.0 {
+                    continue;
+                }
+                if !is_left_paddle && ball_direction.0.x < 0.0 {
+                    continue;
+                }
+
                 if overlap_x < overlap_y {
-                    ball_direction.0.x *= -1.;
+                    // Bounce vertically, dependent on the ball's position relative to the paddle
+                    let delta_y = (ball_transform.translation.y - paddle_transform.translation.y)
+                        / DEMI_PADDLE_HEIGHT;
+                    let angle = delta_y * std::f32::consts::FRAC_PI_3;
+                    let bounce_direction_x = if is_left_paddle { 1.0 } else { -1.0 };
+                    let x = angle.cos() * bounce_direction_x;
+                    let y = angle.sin();
+                    ball_direction.0 = Vec2::new(x, y).normalize();
+
+                    // Move the ball to just outside the paddle
                     ball_transform.translation.x = paddle_transform.translation.x
-                        + (DEMI_PADDLE_WIDTH + DEMI_BALL_SIZE) * side_x;
+                        + (DEMI_PADDLE_WIDTH + DEMI_BALL_SIZE) * bounce_direction_x;
+
+                    // Accelerate ball
+                    ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
                 } else {
                     ball_direction.0.y *= -1.;
+                    let side_y =
+                        (ball_transform.translation.y - paddle_transform.translation.y).signum();
                     ball_transform.translation.y = paddle_transform.translation.y
                         + (DEMI_PADDLE_HEIGHT + DEMI_BALL_SIZE) * side_y;
                 }
