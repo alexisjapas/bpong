@@ -3,14 +3,14 @@ use bevy::window::WindowResolution;
 
 const SCREEN_WIDTH: f32 = 720.;
 const SCREEN_HEIGHT: f32 = 480.;
-const PADDLE_HEIGHT: f32 = 64.;
-const PADDLE_WIDTH: f32 = 32.;
-const PADDLE_SPEED: f32 = 678.;
-const BALL_SIZE: f32 = 16.;
-const BALL_INITIAL_SPEED: f32 = 256.;
+const PADDLE_HEIGHT: f32 = 80.;
+const PADDLE_WIDTH: f32 = 16.;
+const PADDLE_SPEED: f32 = 512.;
+const BALL_SIZE: f32 = 8.;
+const BALL_INITIAL_SPEED: f32 = 320.;
 const BALL_MAX_SPEED: f32 = 2048.;
 const BALL_MULTIPLIER: f32 = 1.1;
-const INIT_HEALTH: u32 = 10;
+const INIT_HEALTH: u32 = 9;
 
 const DEMI_SCREEN_WIDTH: f32 = SCREEN_WIDTH / 2.;
 const DEMI_SCREEN_HEIGHT: f32 = SCREEN_HEIGHT / 2.;
@@ -22,7 +22,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
-            title: "Bin pong".into(),
+            title: "BPONG".into(),
             resolution: WindowResolution::new(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32),
             ..default()
         }),

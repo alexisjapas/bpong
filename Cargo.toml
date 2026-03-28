@@ -7,7 +7,8 @@ edition = "2024"
 bevy = "0.18.1"
 rand = "0.10.0"
 
-[profile.release]
+[profile.release_optimized]
+inherits = "release"
 lto = "fat"
 codegen-units = 1
 panic = "abort"
