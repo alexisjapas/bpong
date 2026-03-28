@@ -5,11 +5,11 @@ const SCREEN_WIDTH: f32 = 720.;
 const SCREEN_HEIGHT: f32 = 480.;
 const PADDLE_HEIGHT: f32 = 64.;
 const PADDLE_WIDTH: f32 = 32.;
-const PADDLE_SPEED: f32 = 1024.;
+const PADDLE_SPEED: f32 = 678.;
 const BALL_SIZE: f32 = 16.;
-const BALL_INITIAL_SPEED: f32 = 300.;
-const BALL_MAX_SPEED: f32 = 4096.;
-const BALL_MULTIPLIER: f32 = 1.01;
+const BALL_INITIAL_SPEED: f32 = 256.;
+const BALL_MAX_SPEED: f32 = 2048.;
+const BALL_MULTIPLIER: f32 = 1.1;
 const INIT_HEALTH: u32 = 10;
 
 const DEMI_SCREEN_WIDTH: f32 = SCREEN_WIDTH / 2.;
@@ -29,12 +29,13 @@ fn main() {
         ..default()
     }));
 
-    app.add_systems(Startup, (setup_camera, spawn_player, spawn_ai, spawn_ball));
+    app.add_systems(Startup, (setup_camera, spawn_players, spawn_ball));
 
     app.add_systems(
         Update,
         (
-            move_player,
+            move_player_left,
+            move_player_right,
             move_ball,
             handle_scoring.after(move_ball),
             handle_ball_collisions.after(handle_scoring),
@@ -51,10 +52,10 @@ fn main() {
 // Components
 // Game
 #[derive(Component)]
-struct Player;
+struct PlayerLeft;
 
 #[derive(Component)]
-struct AI;
+struct PlayerRight;
 
 #[derive(Component)]
 struct Ball;
@@ -70,19 +71,19 @@ struct Speed(f32);
 
 // UI
 #[derive(Component)]
-struct ScorePlayer;
+struct ScorePlayerLeft;
 
 #[derive(Component)]
-struct ScoreAI;
+struct ScorePlayerRight;
 
 // Systems
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2d);
 }
 
-fn spawn_player(mut commands: Commands) {
+fn spawn_players(mut commands: Commands) {
     commands.spawn((
-        Player,
+        PlayerLeft,
         Health(INIT_HEALTH),
         Transform::from_xyz(-DEMI_SCREEN_WIDTH + PADDLE_WIDTH, 0.0, 0.0),
         Sprite {
@@ -91,11 +92,8 @@ fn spawn_player(mut commands: Commands) {
             ..default()
         },
     ));
-}
-
-fn spawn_ai(mut commands: Commands) {
     commands.spawn((
-        AI,
+        PlayerRight,
         Health(INIT_HEALTH),
         Transform::from_xyz(DEMI_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
         Sprite {
@@ -126,22 +124,45 @@ fn spawn_ball(mut commands: Commands) {
     ));
 }
 
-fn move_player(
+fn move_player_left(
     time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<&mut Transform, With<Player>>,
+    mut query: Query<&mut Transform, With<PlayerLeft>>,
 ) {
-    for mut player_transform in query.iter_mut() {
+    for mut pleft_transform in query.iter_mut() {
+        if input.pressed(KeyCode::KeyW) {
+            pleft_transform.translation.y =
+                (pleft_transform.translation.y + PADDLE_SPEED * time.delta_secs()).clamp(
+                    -DEMI_SCREEN_HEIGHT + DEMI_PADDLE_HEIGHT,
+                    DEMI_SCREEN_HEIGHT - DEMI_PADDLE_HEIGHT,
+                );
+        }
+        if input.pressed(KeyCode::KeyS) {
+            pleft_transform.translation.y =
+                (pleft_transform.translation.y - PADDLE_SPEED * time.delta_secs()).clamp(
+                    -DEMI_SCREEN_HEIGHT + DEMI_PADDLE_HEIGHT,
+                    DEMI_SCREEN_HEIGHT - DEMI_PADDLE_HEIGHT,
+                );
+        }
+    }
+}
+
+fn move_player_right(
+    time: Res<Time>,
+    input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<&mut Transform, With<PlayerRight>>,
+) {
+    for mut pright_transform in query.iter_mut() {
         if input.pressed(KeyCode::ArrowUp) {
-            player_transform.translation.y =
-                (player_transform.translation.y + PADDLE_SPEED * time.delta_secs()).clamp(
+            pright_transform.translation.y =
+                (pright_transform.translation.y + PADDLE_SPEED * time.delta_secs()).clamp(
                     -DEMI_SCREEN_HEIGHT + DEMI_PADDLE_HEIGHT,
                     DEMI_SCREEN_HEIGHT - DEMI_PADDLE_HEIGHT,
                 );
         }
         if input.pressed(KeyCode::ArrowDown) {
-            player_transform.translation.y =
-                (player_transform.translation.y - PADDLE_SPEED * time.delta_secs()).clamp(
+            pright_transform.translation.y =
+                (pright_transform.translation.y - PADDLE_SPEED * time.delta_secs()).clamp(
                     -DEMI_SCREEN_HEIGHT + DEMI_PADDLE_HEIGHT,
                     DEMI_SCREEN_HEIGHT - DEMI_PADDLE_HEIGHT,
                 );
@@ -158,7 +179,7 @@ fn move_ball(time: Res<Time>, mut query: Query<(&mut Transform, &Direction, &Spe
 
 fn handle_ball_collisions(
     mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,
-    paddle_query: Query<&Transform, (Or<(With<Player>, With<AI>)>, Without<Ball>)>,
+    paddle_query: Query<&Transform, (Or<(With<PlayerLeft>, With<PlayerRight>)>, Without<Ball>)>,
 ) {
     for (mut ball_transform, mut ball_direction, mut ball_speed) in ball_query.iter_mut() {
         // Paddles collision
@@ -217,21 +238,21 @@ fn handle_ball_collisions(
 
 fn handle_scoring(
     mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,
-    mut player_query: Query<&mut Health, (With<Player>, Without<AI>)>,
-    mut ai_query: Query<&mut Health, (With<AI>, Without<Player>)>,
+    mut pleft_query: Query<&mut Health, (With<PlayerLeft>, Without<PlayerRight>)>,
+    mut pright_query: Query<&mut Health, (With<PlayerRight>, Without<PlayerLeft>)>,
 ) {
     for (mut ball_transform, mut ball_direction, mut ball_speed) in ball_query.iter_mut() {
         let out_left = ball_transform.translation.x < -DEMI_SCREEN_WIDTH + DEMI_BALL_SIZE;
         let out_right = ball_transform.translation.x > DEMI_SCREEN_WIDTH - DEMI_BALL_SIZE;
         if out_left {
             ball_direction.0.x = -1.;
-            for mut health in player_query.iter_mut() {
+            for mut health in pleft_query.iter_mut() {
                 health.0 = health.0.saturating_sub(1);
             }
         }
         if out_right {
             ball_direction.0.x = 1.;
-            for mut health in ai_query.iter_mut() {
+            for mut health in pright_query.iter_mut() {
                 health.0 = health.0.saturating_sub(1);
             }
         }
@@ -253,8 +274,8 @@ fn spawn_scores(mut commands: Commands) {
     };
 
     commands.spawn(root_node).with_children(|parent| {
-        // Player score
-        let container_player = Node {
+        // PlayerLeft score
+        let container_pleft = Node {
             width: Val::Percent(50.),
             height: Val::Percent(100.),
             align_items: AlignItems::FlexStart,
@@ -262,19 +283,17 @@ fn spawn_scores(mut commands: Commands) {
             padding: UiRect::all(Val::Px(8.)),
             ..default()
         };
-        parent
-            .spawn(container_player)
-            .with_children(|player_parent| {
-                player_parent.spawn((
-                    Text::new(format!("{}", INIT_HEALTH)),
-                    TextColor(Color::WHITE),
-                    TextLayout::new_with_justify(Justify::Right),
-                    ScorePlayer,
-                ));
-            });
+        parent.spawn(container_pleft).with_children(|pleft_parent| {
+            pleft_parent.spawn((
+                Text::new(format!("{}", INIT_HEALTH)),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Right),
+                ScorePlayerLeft,
+            ));
+        });
 
-        // AI score
-        let container_ai = Node {
+        // PlayerRight score
+        let container_pright = Node {
             width: Val::Percent(50.),
             height: Val::Percent(100.),
             align_items: AlignItems::FlexStart,
@@ -282,31 +301,33 @@ fn spawn_scores(mut commands: Commands) {
             padding: UiRect::all(Val::Px(8.)),
             ..default()
         };
-        parent.spawn(container_ai).with_children(|ai_parent| {
-            ai_parent.spawn((
-                Text::new(format!("{}", INIT_HEALTH)),
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Left),
-                ScoreAI,
-            ));
-        });
+        parent
+            .spawn(container_pright)
+            .with_children(|pright_parent| {
+                pright_parent.spawn((
+                    Text::new(format!("{}", INIT_HEALTH)),
+                    TextColor(Color::WHITE),
+                    TextLayout::new_with_justify(Justify::Left),
+                    ScorePlayerRight,
+                ));
+            });
     });
 }
 
 fn update_scores(
-    player_health_q: Query<&Health, (With<Player>, Changed<Health>)>,
-    ai_health_q: Query<&Health, (With<AI>, Changed<Health>)>,
-    mut player_text_q: Query<&mut Text, (With<ScorePlayer>, Without<ScoreAI>)>,
-    mut ai_text_q: Query<&mut Text, (With<ScoreAI>, Without<ScorePlayer>)>,
+    pleft_health_q: Query<&Health, (With<PlayerLeft>, Changed<Health>)>,
+    pright_health_q: Query<&Health, (With<PlayerRight>, Changed<Health>)>,
+    mut pleft_text_q: Query<&mut Text, (With<ScorePlayerLeft>, Without<ScorePlayerRight>)>,
+    mut pright_text_q: Query<&mut Text, (With<ScorePlayerRight>, Without<ScorePlayerLeft>)>,
 ) {
-    if let Ok(player_health) = player_health_q.single() {
-        if let Ok(mut player_text) = player_text_q.single_mut() {
-            player_text.0 = format!("{}", player_health.0);
+    if let Ok(pleft_health) = pleft_health_q.single() {
+        if let Ok(mut pleft_text) = pleft_text_q.single_mut() {
+            pleft_text.0 = format!("{}", pleft_health.0);
         }
     }
-    if let Ok(ai_health) = ai_health_q.single() {
-        if let Ok(mut ai_text) = ai_text_q.single_mut() {
-            ai_text.0 = format!("{}", ai_health.0);
+    if let Ok(pright_health) = pright_health_q.single() {
+        if let Ok(mut pright_text) = pright_text_q.single_mut() {
+            pright_text.0 = format!("{}", pright_health.0);
         }
     }
 }
