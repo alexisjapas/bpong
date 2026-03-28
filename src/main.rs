@@ -3,7 +3,7 @@ use bevy::window::WindowResolution;
 
 const SCREEN_WIDTH: f32 = 720.;
 const SCREEN_HEIGHT: f32 = 480.;
-const PADDLE_HEIGHT: f32 = 256.;
+const PADDLE_HEIGHT: f32 = 64.;
 const PADDLE_WIDTH: f32 = 32.;
 const PADDLE_SPEED: f32 = 1024.;
 const BALL_SIZE: f32 = 16.;
@@ -35,7 +35,8 @@ fn main() {
         (
             move_player,
             move_ball,
-            handle_ball_collisions.after(move_ball),
+            handle_scoring.after(move_ball),
+            handle_ball_collisions.after(handle_scoring),
         ),
     );
 
@@ -47,7 +48,7 @@ fn main() {
 struct Player;
 
 #[derive(Component)]
-struct Ai;
+struct AI;
 
 #[derive(Component)]
 struct Ball;
@@ -81,7 +82,7 @@ fn spawn_player(mut commands: Commands) {
 
 fn spawn_ai(mut commands: Commands) {
     commands.spawn((
-        Ai,
+        AI,
         Health(10),
         Transform::from_xyz(DEMI_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
         Sprite {
@@ -144,7 +145,7 @@ fn move_ball(time: Res<Time>, mut query: Query<(&mut Transform, &Direction, &Spe
 
 fn handle_ball_collisions(
     mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,
-    paddle_query: Query<&Transform, (Or<(With<Player>, With<Ai>)>, Without<Ball>)>,
+    paddle_query: Query<&Transform, (Or<(With<Player>, With<AI>)>, Without<Ball>)>,
 ) {
     for (mut ball_transform, mut ball_direction, mut ball_speed) in ball_query.iter_mut() {
         // Paddles collision
@@ -189,26 +190,37 @@ fn handle_ball_collisions(
             }
         }
 
-        // Walls collision
-        if ball_transform.translation.x < -DEMI_SCREEN_WIDTH + DEMI_BALL_SIZE {
-            ball_transform.translation.x = -DEMI_SCREEN_WIDTH + DEMI_BALL_SIZE;
-            ball_direction.0.x *= -1.;
-            ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
-        }
-        if ball_transform.translation.x > DEMI_SCREEN_WIDTH - DEMI_BALL_SIZE {
-            ball_transform.translation.x = DEMI_SCREEN_WIDTH - DEMI_BALL_SIZE;
-            ball_direction.0.x *= -1.;
-            ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
-        }
+        // Walls collision (top and bottom)
         if ball_transform.translation.y < -DEMI_SCREEN_HEIGHT + DEMI_BALL_SIZE {
             ball_transform.translation.y = -DEMI_SCREEN_HEIGHT + DEMI_BALL_SIZE;
             ball_direction.0.y *= -1.;
-            ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
         }
         if ball_transform.translation.y > DEMI_SCREEN_HEIGHT - DEMI_BALL_SIZE {
             ball_transform.translation.y = DEMI_SCREEN_HEIGHT - DEMI_BALL_SIZE;
             ball_direction.0.y *= -1.;
-            ball_speed.0 = (ball_speed.0 * BALL_MULTIPLIER).clamp(0., BALL_MAX_SPEED);
+        }
+    }
+}
+
+fn handle_scoring(
+    mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,
+    mut player_query: Query<&mut Health, (With<Player>, Without<AI>)>,
+    mut ai_query: Query<&mut Health, (With<AI>, Without<Player>)>,
+) {
+    for (mut ball_transform, mut ball_direction, mut ball_speed) in ball_query.iter_mut() {
+        let out_left = ball_transform.translation.x < -DEMI_SCREEN_WIDTH + DEMI_BALL_SIZE;
+        let out_right = ball_transform.translation.x > DEMI_SCREEN_WIDTH - DEMI_BALL_SIZE;
+        if out_left {
+            ball_direction.0.x = -1.;
+        }
+        if out_right {
+            ball_direction.0.x = 1.;
+        }
+        if out_left || out_right {
+            ball_transform.translation.x = 0.;
+            ball_transform.translation.y = 0.;
+            ball_direction.0.y = 0.;
+            ball_speed.0 = BALL_INITIAL_SPEED;
         }
     }
 }
