@@ -10,6 +10,7 @@ const BALL_SIZE: f32 = 16.;
 const BALL_INITIAL_SPEED: f32 = 300.;
 const BALL_MAX_SPEED: f32 = 4096.;
 const BALL_MULTIPLIER: f32 = 1.01;
+const INIT_HEALTH: u32 = 10;
 
 const DEMI_SCREEN_WIDTH: f32 = SCREEN_WIDTH / 2.;
 const DEMI_SCREEN_HEIGHT: f32 = SCREEN_HEIGHT / 2.;
@@ -40,10 +41,15 @@ fn main() {
         ),
     );
 
+    // UI
+    app.add_systems(Startup, spawn_scores);
+    app.add_systems(Update, update_scores);
+
     app.run();
 }
 
 // Components
+// Game
 #[derive(Component)]
 struct Player;
 
@@ -62,6 +68,13 @@ struct Direction(Vec2);
 #[derive(Component)]
 struct Speed(f32);
 
+// UI
+#[derive(Component)]
+struct ScorePlayer;
+
+#[derive(Component)]
+struct ScoreAI;
+
 // Systems
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2d);
@@ -70,7 +83,7 @@ fn setup_camera(mut commands: Commands) {
 fn spawn_player(mut commands: Commands) {
     commands.spawn((
         Player,
-        Health(10),
+        Health(INIT_HEALTH),
         Transform::from_xyz(-DEMI_SCREEN_WIDTH + PADDLE_WIDTH, 0.0, 0.0),
         Sprite {
             color: Color::srgb(0.5, 0.5, 0.5),
@@ -83,7 +96,7 @@ fn spawn_player(mut commands: Commands) {
 fn spawn_ai(mut commands: Commands) {
     commands.spawn((
         AI,
-        Health(10),
+        Health(INIT_HEALTH),
         Transform::from_xyz(DEMI_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
         Sprite {
             color: Color::srgb(0.5, 0.5, 0.5),
@@ -212,15 +225,88 @@ fn handle_scoring(
         let out_right = ball_transform.translation.x > DEMI_SCREEN_WIDTH - DEMI_BALL_SIZE;
         if out_left {
             ball_direction.0.x = -1.;
+            for mut health in player_query.iter_mut() {
+                health.0 = health.0.saturating_sub(1);
+            }
         }
         if out_right {
             ball_direction.0.x = 1.;
+            for mut health in ai_query.iter_mut() {
+                health.0 = health.0.saturating_sub(1);
+            }
         }
         if out_left || out_right {
             ball_transform.translation.x = 0.;
             ball_transform.translation.y = 0.;
             ball_direction.0.y = 0.;
             ball_speed.0 = BALL_INITIAL_SPEED;
+        }
+    }
+}
+
+fn spawn_scores(mut commands: Commands) {
+    let root_node = Node {
+        width: Val::Percent(100.),
+        height: Val::Percent(100.),
+        flex_direction: FlexDirection::Row,
+        ..default()
+    };
+
+    commands.spawn(root_node).with_children(|parent| {
+        // Player score
+        let container_player = Node {
+            width: Val::Percent(50.),
+            height: Val::Percent(100.),
+            align_items: AlignItems::FlexStart,
+            justify_content: JustifyContent::FlexEnd,
+            padding: UiRect::all(Val::Px(8.)),
+            ..default()
+        };
+        parent
+            .spawn(container_player)
+            .with_children(|player_parent| {
+                player_parent.spawn((
+                    Text::new(format!("{}", INIT_HEALTH)),
+                    TextColor(Color::WHITE),
+                    TextLayout::new_with_justify(Justify::Right),
+                    ScorePlayer,
+                ));
+            });
+
+        // AI score
+        let container_ai = Node {
+            width: Val::Percent(50.),
+            height: Val::Percent(100.),
+            align_items: AlignItems::FlexStart,
+            justify_content: JustifyContent::FlexStart,
+            padding: UiRect::all(Val::Px(8.)),
+            ..default()
+        };
+        parent.spawn(container_ai).with_children(|ai_parent| {
+            ai_parent.spawn((
+                Text::new(format!("{}", INIT_HEALTH)),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Left),
+                ScoreAI,
+            ));
+        });
+    });
+}
+
+fn update_scores(
+    player_health_q: Query<&Health, (With<Player>, Changed<Health>)>,
+    ai_health_q: Query<&Health, (With<AI>, Changed<Health>)>,
+    mut player_text_q: Query<&mut Text, (With<ScorePlayer>, Without<ScoreAI>)>,
+    mut ai_text_q: Query<&mut Text, (With<ScoreAI>, Without<ScorePlayer>)>,
+) {
+    if let Ok(player_health) = player_health_q.single() {
+        if let Ok(mut player_text) = player_text_q.single_mut() {
+            player_text.0 = format!("{}", player_health.0);
+        }
+    }
+    if let Ok(ai_health) = ai_health_q.single() {
+        if let Ok(mut ai_text) = ai_text_q.single_mut() {
+            ai_text.0 = format!("{}", ai_health.0);
         }
     }
 }
