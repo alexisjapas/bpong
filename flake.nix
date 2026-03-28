@@ -31,6 +31,7 @@
                 # Rust dependencies
                 (rust-bin.stable.latest.default.override { extensions = [ "rust-src" ]; })
                 pkg-config
+                mangohud
               ]
               ++ lib.optionals (lib.strings.hasInfix "linux" system) [
                 # for Linux
