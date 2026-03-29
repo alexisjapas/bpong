@@ -29,7 +29,10 @@ fn main() {
         ..default()
     }));
 
-    app.add_systems(Startup, (setup_camera, spawn_players, spawn_ball));
+    app.add_systems(
+        Startup,
+        (setup_camera, spawn_players, spawn_ball, load_sounds),
+    );
 
     app.add_systems(
         Update,
@@ -75,6 +78,13 @@ struct ScorePlayerLeft;
 
 #[derive(Component)]
 struct ScorePlayerRight;
+
+// Sound
+#[derive(Resource)]
+struct SoundAssets {
+    ping: Handle<AudioSource>,
+    pong: Handle<AudioSource>,
+}
 
 // Systems
 fn setup_camera(mut commands: Commands) {
@@ -178,6 +188,8 @@ fn move_ball(time: Res<Time>, mut query: Query<(&mut Transform, &Direction, &Spe
 }
 
 fn handle_ball_collisions(
+    sounds: Res<SoundAssets>,
+    mut commands: Commands,
     mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,
     paddle_query: Query<&Transform, (Or<(With<PlayerLeft>, With<PlayerRight>)>, Without<Ball>)>,
 ) {
@@ -199,6 +211,12 @@ fn handle_ball_collisions(
                 }
 
                 if overlap_x < overlap_y {
+                    if is_left_paddle {
+                        commands.spawn(AudioPlayer::new(sounds.ping.clone()));
+                    } else {
+                        commands.spawn(AudioPlayer::new(sounds.pong.clone()));
+                    }
+
                     // Bounce vertically, dependent on the ball's position relative to the paddle
                     let delta_y = (ball_transform.translation.y - paddle_transform.translation.y)
                         / DEMI_PADDLE_HEIGHT;
@@ -330,4 +348,11 @@ fn update_scores(
             pright_text.0 = format!("{}", pright_health.0);
         }
     }
+}
+
+fn load_sounds(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.insert_resource(SoundAssets {
+        ping: asset_server.load("ping.ogg"),
+        pong: asset_server.load("pong.ogg"),
+    });
 }
