@@ -2,7 +2,7 @@
 ## Roadmap
 ### Minimal
 - Menu
-- Sound
+- AI levels
 
 ### Improvements
 - Generic inputs (keyboard+gamepad)

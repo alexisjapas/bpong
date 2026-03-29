@@ -28,6 +28,7 @@ fn main() {
         }),
         ..default()
     }));
+    app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
 
     app.add_systems(
         Startup,
@@ -91,30 +92,22 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2d);
 }
 
-fn spawn_players(mut commands: Commands) {
+fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         PlayerLeft,
         Health(INIT_HEALTH),
         Transform::from_xyz(-DEMI_SCREEN_WIDTH + PADDLE_WIDTH, 0.0, 0.0),
-        Sprite {
-            color: Color::srgb(0.5, 0.5, 0.5),
-            custom_size: Some(Vec2::new(PADDLE_WIDTH, PADDLE_HEIGHT)),
-            ..default()
-        },
+        Sprite::from_image(asset_server.load("paddle.png")),
     ));
     commands.spawn((
         PlayerRight,
         Health(INIT_HEALTH),
         Transform::from_xyz(DEMI_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
-        Sprite {
-            color: Color::srgb(0.5, 0.5, 0.5),
-            custom_size: Some(Vec2::new(PADDLE_WIDTH, PADDLE_HEIGHT)),
-            ..default()
-        },
+        Sprite::from_image(asset_server.load("paddle.png")),
     ));
 }
 
-fn spawn_ball(mut commands: Commands) {
+fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         Ball,
         Transform::from_xyz(0.0, 0.0, 0.0),
@@ -126,11 +119,7 @@ fn spawn_ball(mut commands: Commands) {
             .normalize(),
         ),
         Speed(BALL_INITIAL_SPEED),
-        Sprite {
-            color: Color::srgb(1.0, 1.0, 1.0),
-            custom_size: Some(Vec2::new(BALL_SIZE, BALL_SIZE)),
-            ..default()
-        },
+        Sprite::from_image(asset_server.load("ball.png")),
     ));
 }
 
