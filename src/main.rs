@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 
-const SCREEN_WIDTH: f32 = 720.;
-const SCREEN_HEIGHT: f32 = 480.;
+const SCREEN_WIDTH: f32 = 1280.;
+const SCREEN_HEIGHT: f32 = 720.;
 const PADDLE_HEIGHT: f32 = 80.;
 const PADDLE_WIDTH: f32 = 16.;
 const PADDLE_SPEED: f32 = 512.;
