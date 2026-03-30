@@ -31,7 +31,7 @@ fn main() {
     }));
     app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
     app.add_systems(Startup, setup_camera);
-    app.init_state::<GameState>();
+    app.init_state::<GameState>().add_sub_state::<InGameState>();
 
     // Menu
     app.add_systems(OnEnter(GameState::MainMenu), setup_menu);
@@ -41,9 +41,9 @@ fn main() {
     );
     app.add_systems(OnExit(GameState::MainMenu), cleanup_menu);
 
-    // Game
+    // InGame
     app.add_systems(
-        OnEnter(GameState::Game),
+        OnEnter(GameState::InGame),
         (spawn_scores, spawn_players, spawn_ball, load_sounds),
     );
     app.add_systems(
@@ -55,8 +55,15 @@ fn main() {
             handle_scoring.after(move_ball),
             handle_ball_collisions.after(handle_scoring),
             update_scores,
+            handle_pause,
         )
-            .run_if(in_state(GameState::Game)),
+            .run_if(in_state(InGameState::Playing)),
+    );
+
+    // Paused
+    app.add_systems(
+        Update,
+        (handle_depause).run_if(in_state(InGameState::Paused)),
     );
 
     // Run
@@ -64,7 +71,7 @@ fn main() {
 }
 
 // Components
-// Game
+// InGame
 #[derive(Component)]
 struct PlayerLeft;
 
@@ -115,7 +122,15 @@ fn setup_camera(mut commands: Commands) {
 enum GameState {
     #[default]
     MainMenu,
-    Game,
+    InGame,
+}
+
+#[derive(SubStates, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[source(GameState = GameState::InGame)]
+enum InGameState {
+    #[default]
+    Playing,
+    Paused,
 }
 
 fn setup_menu(mut commands: Commands) {
@@ -177,7 +192,7 @@ fn handle_button_play(
 ) {
     for interaction in interaction_q.iter() {
         if *interaction == Interaction::Pressed {
-            next_state.set(GameState::Game);
+            next_state.set(GameState::InGame);
         }
     }
 }
@@ -193,7 +208,7 @@ fn handle_button_quit(
     }
 }
 
-// Game
+// InGame
 fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         PlayerLeft,
@@ -446,4 +461,19 @@ fn load_sounds(mut commands: Commands, asset_server: Res<AssetServer>) {
         ping: asset_server.load("ping.ogg"),
         pong: asset_server.load("pong.ogg"),
     });
+}
+
+fn handle_pause(mut next_state: ResMut<NextState<InGameState>>, input: Res<ButtonInput<KeyCode>>) {
+    if input.just_pressed(KeyCode::Escape) {
+        next_state.set(InGameState::Paused);
+    }
+}
+
+fn handle_depause(
+    mut next_state: ResMut<NextState<InGameState>>,
+    input: Res<ButtonInput<KeyCode>>,
+) {
+    if input.just_pressed(KeyCode::Escape) {
+        next_state.set(InGameState::Playing);
+    }
 }
