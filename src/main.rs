@@ -19,6 +19,7 @@ const DEMI_PADDLE_HEIGHT: f32 = PADDLE_HEIGHT / 2.;
 const DEMI_BALL_SIZE: f32 = BALL_SIZE / 2.;
 
 fn main() {
+    // Generic setup
     let mut app = App::new();
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
@@ -29,12 +30,22 @@ fn main() {
         ..default()
     }));
     app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
+    app.add_systems(Startup, setup_camera);
+    app.init_state::<GameState>();
 
+    // Menu
+    app.add_systems(OnEnter(GameState::MainMenu), setup_menu);
     app.add_systems(
-        Startup,
-        (setup_camera, spawn_players, spawn_ball, load_sounds),
+        Update,
+        (handle_button_play, handle_button_quit).run_if(in_state(GameState::MainMenu)),
     );
+    app.add_systems(OnExit(GameState::MainMenu), cleanup_menu);
 
+    // Game
+    app.add_systems(
+        OnEnter(GameState::Game),
+        (spawn_scores, spawn_players, spawn_ball, load_sounds),
+    );
     app.add_systems(
         Update,
         (
@@ -43,13 +54,12 @@ fn main() {
             move_ball,
             handle_scoring.after(move_ball),
             handle_ball_collisions.after(handle_scoring),
-        ),
+            update_scores,
+        )
+            .run_if(in_state(GameState::Game)),
     );
 
-    // UI
-    app.add_systems(Startup, spawn_scores);
-    app.add_systems(Update, update_scores);
-
+    // Run
     app.run();
 }
 
@@ -80,6 +90,15 @@ struct ScorePlayerLeft;
 #[derive(Component)]
 struct ScorePlayerRight;
 
+#[derive(Component)]
+struct MenuEntity;
+
+#[derive(Component)]
+struct ButtonPlay;
+
+#[derive(Component)]
+struct ButtonQuit;
+
 // Sound
 #[derive(Resource)]
 struct SoundAssets {
@@ -87,11 +106,94 @@ struct SoundAssets {
     pong: Handle<AudioSource>,
 }
 
-// Systems
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2d);
 }
 
+// Menus
+#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
+enum GameState {
+    #[default]
+    MainMenu,
+    Game,
+}
+
+fn setup_menu(mut commands: Commands) {
+    let root_node = Node {
+        width: Val::Percent(100.),
+        height: Val::Percent(100.),
+        flex_direction: FlexDirection::Column,
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        ..default()
+    };
+
+    commands
+        .spawn((root_node, MenuEntity))
+        .with_children(|parent| {
+            // Button Play
+            let container_button_play = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_play).with_child((
+                Text::new(format!("PLAY")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonPlay,
+                Button,
+            ));
+
+            // Button Quit
+            let container_button_quit = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_quit).with_child((
+                Text::new(format!("QUIT")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonQuit,
+                Button,
+            ));
+        });
+}
+
+fn cleanup_menu(mut commands: Commands, query: Query<Entity, With<MenuEntity>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
+fn handle_button_play(
+    mut next_state: ResMut<NextState<GameState>>,
+    interaction_q: Query<&Interaction, (With<ButtonPlay>, Changed<Interaction>)>,
+) {
+    for interaction in interaction_q.iter() {
+        if *interaction == Interaction::Pressed {
+            next_state.set(GameState::Game);
+        }
+    }
+}
+
+fn handle_button_quit(
+    mut exit: MessageWriter<AppExit>,
+    interaction_q: Query<&Interaction, (With<ButtonQuit>, Changed<Interaction>)>,
+) {
+    for interaction in interaction_q.iter() {
+        if *interaction == Interaction::Pressed {
+            exit.write(AppExit::Success);
+        }
+    }
+}
+
+// Game
 fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         PlayerLeft,
