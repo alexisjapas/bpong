@@ -46,6 +46,7 @@ fn main() {
         OnEnter(GameState::InGame),
         (spawn_scores, spawn_players, spawn_ball, load_sounds),
     );
+    app.add_systems(OnExit(GameState::InGame), cleanup_ingame);
     app.add_systems(
         Update,
         (
@@ -61,10 +62,22 @@ fn main() {
     );
 
     // Paused
+    app.add_systems(OnEnter(InGameState::Paused), setup_pause);
+    app.add_systems(OnExit(InGameState::Paused), cleanup_pause);
     app.add_systems(
         Update,
-        (handle_depause).run_if(in_state(InGameState::Paused)),
+        (
+            handle_depause,
+            handle_button_resume,
+            handle_button_restart,
+            handle_button_menu,
+            handle_button_quit,
+        )
+            .run_if(in_state(InGameState::Paused)),
     );
+
+    // Restarting
+    app.add_systems(OnEnter(GameState::Restarting), restart_game);
 
     // Run
     app.run();
@@ -101,10 +114,25 @@ struct ScorePlayerRight;
 struct MenuEntity;
 
 #[derive(Component)]
+struct PausedEntity;
+
+#[derive(Component)]
+struct InGameEntity;
+
+#[derive(Component)]
 struct ButtonPlay;
 
 #[derive(Component)]
-struct ButtonQuit;
+struct ButtonMenu;
+
+#[derive(Component)]
+struct ButtonResume;
+
+#[derive(Component)]
+struct ButtonRestart;
+
+#[derive(Component)]
+struct ButtonExit;
 
 // Sound
 #[derive(Resource)]
@@ -123,6 +151,7 @@ enum GameState {
     #[default]
     MainMenu,
     InGame,
+    Restarting,
 }
 
 #[derive(SubStates, Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -162,19 +191,19 @@ fn setup_menu(mut commands: Commands) {
                 Button,
             ));
 
-            // Button Quit
-            let container_button_quit = Node {
+            // Button Exit
+            let container_button_exit = Node {
                 width: Val::Percent(20.),
                 height: Val::Percent(20.),
                 justify_content: JustifyContent::Center,
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
-            parent.spawn(container_button_quit).with_child((
-                Text::new(format!("QUIT")),
+            parent.spawn(container_button_exit).with_child((
+                Text::new(format!("EXIT")),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
-                ButtonQuit,
+                ButtonExit,
                 Button,
             ));
         });
@@ -199,7 +228,7 @@ fn handle_button_play(
 
 fn handle_button_quit(
     mut exit: MessageWriter<AppExit>,
-    interaction_q: Query<&Interaction, (With<ButtonQuit>, Changed<Interaction>)>,
+    interaction_q: Query<&Interaction, (With<ButtonExit>, Changed<Interaction>)>,
 ) {
     for interaction in interaction_q.iter() {
         if *interaction == Interaction::Pressed {
@@ -215,12 +244,14 @@ fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
         Health(INIT_HEALTH),
         Transform::from_xyz(-DEMI_SCREEN_WIDTH + PADDLE_WIDTH, 0.0, 0.0),
         Sprite::from_image(asset_server.load("paddle.png")),
+        InGameEntity,
     ));
     commands.spawn((
         PlayerRight,
         Health(INIT_HEALTH),
         Transform::from_xyz(DEMI_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
         Sprite::from_image(asset_server.load("paddle.png")),
+        InGameEntity,
     ));
 }
 
@@ -237,7 +268,14 @@ fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
         ),
         Speed(BALL_INITIAL_SPEED),
         Sprite::from_image(asset_server.load("ball.png")),
+        InGameEntity,
     ));
+}
+
+fn cleanup_ingame(mut commands: Commands, query: Query<Entity, With<InGameEntity>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
+    }
 }
 
 fn move_player_left(
@@ -397,45 +435,47 @@ fn spawn_scores(mut commands: Commands) {
         ..default()
     };
 
-    commands.spawn(root_node).with_children(|parent| {
-        // PlayerLeft score
-        let container_pleft = Node {
-            width: Val::Percent(50.),
-            height: Val::Percent(100.),
-            align_items: AlignItems::FlexStart,
-            justify_content: JustifyContent::FlexEnd,
-            padding: UiRect::all(Val::Px(8.)),
-            ..default()
-        };
-        parent.spawn(container_pleft).with_children(|pleft_parent| {
-            pleft_parent.spawn((
-                Text::new(format!("{}", INIT_HEALTH)),
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Right),
-                ScorePlayerLeft,
-            ));
-        });
-
-        // PlayerRight score
-        let container_pright = Node {
-            width: Val::Percent(50.),
-            height: Val::Percent(100.),
-            align_items: AlignItems::FlexStart,
-            justify_content: JustifyContent::FlexStart,
-            padding: UiRect::all(Val::Px(8.)),
-            ..default()
-        };
-        parent
-            .spawn(container_pright)
-            .with_children(|pright_parent| {
-                pright_parent.spawn((
+    commands
+        .spawn((root_node, InGameEntity))
+        .with_children(|parent| {
+            // PlayerLeft score
+            let container_pleft = Node {
+                width: Val::Percent(50.),
+                height: Val::Percent(100.),
+                align_items: AlignItems::FlexStart,
+                justify_content: JustifyContent::FlexEnd,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_pleft).with_children(|pleft_parent| {
+                pleft_parent.spawn((
                     Text::new(format!("{}", INIT_HEALTH)),
                     TextColor(Color::WHITE),
-                    TextLayout::new_with_justify(Justify::Left),
-                    ScorePlayerRight,
+                    TextLayout::new_with_justify(Justify::Right),
+                    ScorePlayerLeft,
                 ));
             });
-    });
+
+            // PlayerRight score
+            let container_pright = Node {
+                width: Val::Percent(50.),
+                height: Val::Percent(100.),
+                align_items: AlignItems::FlexStart,
+                justify_content: JustifyContent::FlexStart,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent
+                .spawn(container_pright)
+                .with_children(|pright_parent| {
+                    pright_parent.spawn((
+                        Text::new(format!("{}", INIT_HEALTH)),
+                        TextColor(Color::WHITE),
+                        TextLayout::new_with_justify(Justify::Left),
+                        ScorePlayerRight,
+                    ));
+                });
+        });
 }
 
 fn update_scores(
@@ -463,6 +503,92 @@ fn load_sounds(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
+// Pause
+fn setup_pause(mut commands: Commands) {
+    let root_node = Node {
+        width: Val::Percent(100.),
+        height: Val::Percent(100.),
+        flex_direction: FlexDirection::Column,
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        ..default()
+    };
+
+    commands
+        .spawn((root_node, PausedEntity))
+        .with_children(|parent| {
+            // Button Resume
+            let container_button_resume = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_resume).with_child((
+                Text::new(format!("RESUME")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonResume,
+                Button,
+            ));
+
+            // Button Restart
+            let container_button_restart = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_restart).with_child((
+                Text::new(format!("RESTART")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonRestart,
+                Button,
+            ));
+
+            // Button Menu
+            let container_button_menu = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_menu).with_child((
+                Text::new(format!("MENU")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonMenu,
+                Button,
+            ));
+
+            // Button Exit
+            let container_button_exit = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_exit).with_child((
+                Text::new(format!("EXIT")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonExit,
+                Button,
+            ));
+        });
+}
+
+fn cleanup_pause(mut commands: Commands, query: Query<Entity, With<PausedEntity>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
 fn handle_pause(mut next_state: ResMut<NextState<InGameState>>, input: Res<ButtonInput<KeyCode>>) {
     if input.just_pressed(KeyCode::Escape) {
         next_state.set(InGameState::Paused);
@@ -475,5 +601,42 @@ fn handle_depause(
 ) {
     if input.just_pressed(KeyCode::Escape) {
         next_state.set(InGameState::Playing);
+    }
+}
+
+fn handle_button_resume(
+    mut next_state: ResMut<NextState<InGameState>>,
+    interaction_q: Query<&Interaction, (With<ButtonResume>, Changed<Interaction>)>,
+) {
+    for interaction in interaction_q.iter() {
+        if *interaction == Interaction::Pressed {
+            next_state.set(InGameState::Playing);
+        }
+    }
+}
+
+fn handle_button_restart(
+    mut next_state: ResMut<NextState<GameState>>,
+    interaction_q: Query<&Interaction, (With<ButtonRestart>, Changed<Interaction>)>,
+) {
+    for interaction in interaction_q.iter() {
+        if *interaction == Interaction::Pressed {
+            next_state.set(GameState::Restarting);
+        }
+    }
+}
+
+fn restart_game(mut next_state: ResMut<NextState<GameState>>) {
+    next_state.set(GameState::InGame);
+}
+
+fn handle_button_menu(
+    mut next_state: ResMut<NextState<GameState>>,
+    interaction_q: Query<&Interaction, (With<ButtonMenu>, Changed<Interaction>)>,
+) {
+    for interaction in interaction_q.iter() {
+        if *interaction == Interaction::Pressed {
+            next_state.set(GameState::MainMenu);
+        }
     }
 }
