@@ -1,7 +1,6 @@
 # Bevy Pong
 ## Roadmap
 ### Minimal
-- GameOver
 - Fix paddle-tunneling
 
 ### Improvements

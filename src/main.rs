@@ -30,21 +30,22 @@ fn main() {
         ..default()
     }));
     app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
-    app.add_systems(Startup, setup_camera);
+    app.add_systems(Startup, (setup_camera, load_sounds));
     app.init_state::<GameState>().add_sub_state::<InGameState>();
 
     // Menu
     app.add_systems(OnEnter(GameState::MainMenu), setup_menu);
     app.add_systems(
         Update,
-        (handle_button_play, handle_button_quit).run_if(in_state(GameState::MainMenu)),
+        (handle_button_play, handle_button_exit, handle_button_title)
+            .run_if(in_state(GameState::MainMenu)),
     );
     app.add_systems(OnExit(GameState::MainMenu), cleanup_menu);
 
     // InGame
     app.add_systems(
         OnEnter(GameState::InGame),
-        (spawn_scores, spawn_players, spawn_ball, load_sounds),
+        (spawn_scores, spawn_players, spawn_ball),
     );
     app.add_systems(OnExit(GameState::InGame), cleanup_ingame);
     app.add_systems(
@@ -57,6 +58,7 @@ fn main() {
             handle_ball_collisions.after(handle_scoring),
             update_scores,
             handle_pause,
+            handle_game_over,
         )
             .run_if(in_state(InGameState::Playing)),
     );
@@ -71,9 +73,22 @@ fn main() {
             handle_button_resume,
             handle_button_restart,
             handle_button_menu,
-            handle_button_quit,
+            handle_button_exit,
         )
             .run_if(in_state(InGameState::Paused)),
+    );
+
+    // Game Over
+    app.add_systems(OnEnter(GameState::GameOver), setup_game_over);
+    app.add_systems(OnExit(GameState::GameOver), cleanup_game_over);
+    app.add_systems(
+        Update,
+        (
+            handle_button_restart,
+            handle_button_menu,
+            handle_button_exit,
+        )
+            .run_if(in_state(GameState::GameOver)),
     );
 
     // Restarting
@@ -120,6 +135,9 @@ struct PausedEntity;
 struct InGameEntity;
 
 #[derive(Component)]
+struct GameOverEntity;
+
+#[derive(Component)]
 struct ButtonPlay;
 
 #[derive(Component)]
@@ -134,11 +152,15 @@ struct ButtonRestart;
 #[derive(Component)]
 struct ButtonExit;
 
+#[derive(Component)]
+struct ButtonTitleEE;
+
 // Sound
 #[derive(Resource)]
 struct SoundAssets {
     ping: Handle<AudioSource>,
     pong: Handle<AudioSource>,
+    ee: Vec<Handle<AudioSource>>,
 }
 
 fn setup_camera(mut commands: Commands) {
@@ -151,6 +173,7 @@ enum GameState {
     #[default]
     MainMenu,
     InGame,
+    GameOver,
     Restarting,
 }
 
@@ -167,19 +190,41 @@ fn setup_menu(mut commands: Commands) {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
         flex_direction: FlexDirection::Column,
-        align_items: AlignItems::Center,
         justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
         ..default()
     };
 
     commands
         .spawn((root_node, MenuEntity))
         .with_children(|parent| {
+            // Title
+            let container_title = Node {
+                width: Val::Percent(100.),
+                height: Val::Percent(30.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_title).with_child((
+                Text::new(format!("BPONG")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                TextFont {
+                    font_size: 64.,
+                    ..default()
+                },
+                ButtonTitleEE,
+                Button,
+            ));
+
             // Button Play
             let container_button_play = Node {
                 width: Val::Percent(20.),
                 height: Val::Percent(20.),
                 justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
@@ -196,6 +241,7 @@ fn setup_menu(mut commands: Commands) {
                 width: Val::Percent(20.),
                 height: Val::Percent(20.),
                 justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
@@ -226,7 +272,7 @@ fn handle_button_play(
     }
 }
 
-fn handle_button_quit(
+fn handle_button_exit(
     mut exit: MessageWriter<AppExit>,
     interaction_q: Query<&Interaction, (With<ButtonExit>, Changed<Interaction>)>,
 ) {
@@ -237,20 +283,33 @@ fn handle_button_quit(
     }
 }
 
+fn handle_button_title(
+    sounds: Res<SoundAssets>,
+    mut commands: Commands,
+    interaction_q: Query<&Interaction, (With<ButtonTitleEE>, Changed<Interaction>)>,
+) {
+    let idx = rand::random_range(0..sounds.ee.len());
+    for interaction in interaction_q.iter() {
+        if *interaction == Interaction::Pressed {
+            commands.spawn(AudioPlayer::new(sounds.ee[idx].clone()));
+        }
+    }
+}
+
 // InGame
 fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         PlayerLeft,
         Health(INIT_HEALTH),
         Transform::from_xyz(-DEMI_SCREEN_WIDTH + PADDLE_WIDTH, 0.0, 0.0),
-        Sprite::from_image(asset_server.load("paddle.png")),
+        Sprite::from_image(asset_server.load("imgs/paddle.png")),
         InGameEntity,
     ));
     commands.spawn((
         PlayerRight,
         Health(INIT_HEALTH),
         Transform::from_xyz(DEMI_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
-        Sprite::from_image(asset_server.load("paddle.png")),
+        Sprite::from_image(asset_server.load("imgs/paddle.png")),
         InGameEntity,
     ));
 }
@@ -267,7 +326,7 @@ fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
             .normalize(),
         ),
         Speed(BALL_INITIAL_SPEED),
-        Sprite::from_image(asset_server.load("ball.png")),
+        Sprite::from_image(asset_server.load("imgs/ball.png")),
         InGameEntity,
     ));
 }
@@ -498,9 +557,20 @@ fn update_scores(
 
 fn load_sounds(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(SoundAssets {
-        ping: asset_server.load("ping.ogg"),
-        pong: asset_server.load("pong.ogg"),
+        ping: asset_server.load("audio/ping.ogg"),
+        pong: asset_server.load("audio/pong.ogg"),
+        ee: (1..=7)
+            .map(|i| asset_server.load(format!("audio/ee/pong_{:02}.ogg", i)))
+            .collect(),
     });
+}
+
+fn handle_game_over(query: Query<&Health>, mut next_state: ResMut<NextState<GameState>>) {
+    for health in query.iter() {
+        if health.0 == 0 {
+            next_state.set(GameState::GameOver);
+        }
+    }
 }
 
 // Pause
@@ -509,8 +579,8 @@ fn setup_pause(mut commands: Commands) {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
         flex_direction: FlexDirection::Column,
-        align_items: AlignItems::Center,
         justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
         ..default()
     };
 
@@ -522,6 +592,7 @@ fn setup_pause(mut commands: Commands) {
                 width: Val::Percent(20.),
                 height: Val::Percent(20.),
                 justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
@@ -538,6 +609,7 @@ fn setup_pause(mut commands: Commands) {
                 width: Val::Percent(20.),
                 height: Val::Percent(20.),
                 justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
@@ -554,6 +626,7 @@ fn setup_pause(mut commands: Commands) {
                 width: Val::Percent(20.),
                 height: Val::Percent(20.),
                 justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
@@ -570,6 +643,7 @@ fn setup_pause(mut commands: Commands) {
                 width: Val::Percent(20.),
                 height: Val::Percent(20.),
                 justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
@@ -638,5 +712,96 @@ fn handle_button_menu(
         if *interaction == Interaction::Pressed {
             next_state.set(GameState::MainMenu);
         }
+    }
+}
+
+fn setup_game_over(mut commands: Commands) {
+    let root_node = Node {
+        width: Val::Percent(100.),
+        height: Val::Percent(100.),
+        flex_direction: FlexDirection::Column,
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    };
+
+    commands
+        .spawn((GameOverEntity, root_node))
+        .with_children(|parent| {
+            // Title
+            let container_title = Node {
+                width: Val::Percent(100.),
+                height: Val::Percent(30.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_title).with_child((
+                Text::new(format!("GAME OVER")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                TextFont {
+                    font_size: 64.,
+                    ..default()
+                },
+            ));
+
+            // Button Restart
+            let container_button_restart = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_restart).with_child((
+                Text::new(format!("PLAY AGAIN")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonRestart,
+                Button,
+            ));
+
+            // Button Menu
+            let container_button_menu = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_menu).with_child((
+                Text::new(format!("MENU")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonMenu,
+                Button,
+            ));
+
+            // Button Exit
+            let container_button_exit = Node {
+                width: Val::Percent(20.),
+                height: Val::Percent(20.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(8.)),
+                ..default()
+            };
+            parent.spawn(container_button_exit).with_child((
+                Text::new(format!("EXIT")),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(Justify::Center),
+                ButtonExit,
+                Button,
+            ));
+        });
+}
+
+fn cleanup_game_over(mut commands: Commands, query: Query<Entity, With<GameOverEntity>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
     }
 }
