@@ -22,16 +22,15 @@ const DEMI_BALL_SIZE: f32 = BALL_SIZE / 2.;
 fn main() {
     // Generic setup
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+    app.add_plugins((EmbeddedAssetPlugin::default(), DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
             title: "BPONG".into(),
             resolution: WindowResolution::new(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32),
             ..default()
         }),
         ..default()
-    }));
+    })));
     app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
-    app.add_plugins(EmbeddedAssetPlugin::default());
     app.add_systems(Startup, (setup_camera, load_sounds));
     app.init_state::<GameState>().add_sub_state::<InGameState>();
 
