@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 
 const SCREEN_WIDTH: f32 = 1280.;
 const SCREEN_HEIGHT: f32 = 720.;
@@ -30,6 +31,7 @@ fn main() {
         ..default()
     }));
     app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
+    app.add_plugins(EmbeddedAssetPlugin::default());
     app.add_systems(Startup, (setup_camera, load_sounds));
     app.init_state::<GameState>().add_sub_state::<InGameState>();
 
