@@ -2,6 +2,11 @@
 ## Roadmap
 ### Minimal
 - Fix paddle-tunneling
+- Github CI/CD
+  - Web
+  - Linux
+  - MacOS
+  - Windows
 
 ### Improvements
 - Generic inputs (keyboard+gamepad)
