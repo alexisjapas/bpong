@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
-use crate::state::GameState;
 use crate::audio::SoundAssets;
+use crate::state::GameState;
 use crate::ui::shared::ButtonExit;
 
 #[derive(Component)]

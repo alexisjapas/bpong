@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::state::InGameState;
-use crate::ui::shared::{ButtonRestart, ButtonMenu, ButtonExit};
+use crate::ui::shared::{ButtonExit, ButtonMenu, ButtonRestart};
 
 #[derive(Component)]
 pub(crate) struct PausedEntity;
@@ -98,7 +98,10 @@ pub fn cleanup_pause(mut commands: Commands, query: Query<Entity, With<PausedEnt
     }
 }
 
-pub fn handle_pause(mut next_state: ResMut<NextState<InGameState>>, input: Res<ButtonInput<KeyCode>>) {
+pub fn handle_pause(
+    mut next_state: ResMut<NextState<InGameState>>,
+    input: Res<ButtonInput<KeyCode>>,
+) {
     if input.just_pressed(KeyCode::Escape) {
         next_state.set(InGameState::Paused);
     }

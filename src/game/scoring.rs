@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
 use crate::constants::*;
-use crate::state::GameState;
 use crate::game::ball::{Ball, Direction, Speed};
 use crate::game::paddle::{Health, PlayerLeft, PlayerRight};
+use crate::state::GameState;
 
 pub fn handle_scoring(
     mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,

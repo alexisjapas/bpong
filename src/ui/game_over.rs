@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::ui::shared::{ButtonRestart, ButtonMenu, ButtonExit};
+use crate::ui::shared::{ButtonExit, ButtonMenu, ButtonRestart};
 
 #[derive(Component)]
 pub(crate) struct GameOverEntity;

@@ -1,10 +1,10 @@
 #![allow(clippy::type_complexity)]
 
-mod constants;
-mod state;
-mod game;
-mod ui;
 mod audio;
+mod constants;
+mod game;
+mod state;
+mod ui;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
