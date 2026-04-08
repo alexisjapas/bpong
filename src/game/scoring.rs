@@ -1,12 +1,11 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-struct ScorePlayerLeft;
+use crate::constants::*;
+use crate::state::GameState;
+use crate::game::ball::{Ball, Direction, Speed};
+use crate::game::paddle::{Health, PlayerLeft, PlayerRight};
 
-#[derive(Component)]
-struct ScorePlayerRight;
-
-fn handle_scoring(
+pub fn handle_scoring(
     mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,
     mut pleft_query: Query<&mut Health, (With<PlayerLeft>, Without<PlayerRight>)>,
     mut pright_query: Query<&mut Health, (With<PlayerRight>, Without<PlayerLeft>)>,
@@ -35,7 +34,7 @@ fn handle_scoring(
     }
 }
 
-fn handle_game_over(query: Query<&Health>, mut next_state: ResMut<NextState<GameState>>) {
+pub fn handle_game_over(query: Query<&Health>, mut next_state: ResMut<NextState<GameState>>) {
     for health in query.iter() {
         if health.0 == 0 {
             next_state.set(GameState::GameOver);

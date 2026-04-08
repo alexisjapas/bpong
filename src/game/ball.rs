@@ -1,15 +1,19 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-struct Ball;
+use crate::constants::*;
+use crate::game::paddle::{InGameEntity, PlayerLeft, PlayerRight};
+use crate::audio::SoundAssets;
 
 #[derive(Component)]
-struct Direction(Vec2);
+pub struct Ball;
 
 #[derive(Component)]
-struct Speed(f32);
+pub struct Direction(pub Vec2);
 
-fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
+#[derive(Component)]
+pub struct Speed(pub f32);
+
+pub fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         Ball,
         Transform::from_xyz(0.0, 0.0, 0.0),
@@ -26,14 +30,14 @@ fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
     ));
 }
 
-fn move_ball(time: Res<Time>, mut query: Query<(&mut Transform, &Direction, &Speed), With<Ball>>) {
+pub fn move_ball(time: Res<Time>, mut query: Query<(&mut Transform, &Direction, &Speed), With<Ball>>) {
     for (mut ball_transform, ball_direction, speed) in query.iter_mut() {
         ball_transform.translation.x += ball_direction.0.x * speed.0 * time.delta_secs();
         ball_transform.translation.y += ball_direction.0.y * speed.0 * time.delta_secs();
     }
 }
 
-fn handle_ball_collisions(
+pub fn handle_ball_collisions(
     sounds: Res<SoundAssets>,
     mut commands: Commands,
     mut ball_query: Query<(&mut Transform, &mut Direction, &mut Speed), With<Ball>>,

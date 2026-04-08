@@ -1,13 +1,17 @@
-#[derive(Component)]
-struct ButtonMenu;
+use bevy::prelude::*;
+
+use crate::state::GameState;
 
 #[derive(Component)]
-struct ButtonRestart;
+pub struct ButtonMenu;
 
 #[derive(Component)]
-struct ButtonExit;
+pub struct ButtonRestart;
 
-fn handle_button_exit(
+#[derive(Component)]
+pub struct ButtonExit;
+
+pub fn handle_button_exit(
     mut exit: MessageWriter<AppExit>,
     interaction_q: Query<&Interaction, (With<ButtonExit>, Changed<Interaction>)>,
 ) {
@@ -18,7 +22,7 @@ fn handle_button_exit(
     }
 }
 
-fn handle_button_restart(
+pub fn handle_button_restart(
     mut next_state: ResMut<NextState<GameState>>,
     interaction_q: Query<&Interaction, (With<ButtonRestart>, Changed<Interaction>)>,
 ) {
@@ -29,7 +33,7 @@ fn handle_button_restart(
     }
 }
 
-fn handle_button_menu(
+pub fn handle_button_menu(
     mut next_state: ResMut<NextState<GameState>>,
     interaction_q: Query<&Interaction, (With<ButtonMenu>, Changed<Interaction>)>,
 ) {

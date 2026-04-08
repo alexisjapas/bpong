@@ -1,12 +1,15 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-struct PausedEntity;
+use crate::state::InGameState;
+use crate::ui::shared::{ButtonRestart, ButtonMenu, ButtonExit};
 
 #[derive(Component)]
-struct ButtonResume;
+pub(crate) struct PausedEntity;
 
-fn setup_pause(mut commands: Commands) {
+#[derive(Component)]
+pub(crate) struct ButtonResume;
+
+pub fn setup_pause(mut commands: Commands) {
     let root_node = Node {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
@@ -29,7 +32,7 @@ fn setup_pause(mut commands: Commands) {
                 ..default()
             };
             parent.spawn(container_button_resume).with_child((
-                Text::new(format!("RESUME")),
+                Text::new("RESUME"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonResume,
@@ -46,7 +49,7 @@ fn setup_pause(mut commands: Commands) {
                 ..default()
             };
             parent.spawn(container_button_restart).with_child((
-                Text::new(format!("RESTART")),
+                Text::new("RESTART"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonRestart,
@@ -63,7 +66,7 @@ fn setup_pause(mut commands: Commands) {
                 ..default()
             };
             parent.spawn(container_button_menu).with_child((
-                Text::new(format!("MENU")),
+                Text::new("MENU"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonMenu,
@@ -80,7 +83,7 @@ fn setup_pause(mut commands: Commands) {
                 ..default()
             };
             parent.spawn(container_button_exit).with_child((
-                Text::new(format!("EXIT")),
+                Text::new("EXIT"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonExit,
@@ -89,19 +92,19 @@ fn setup_pause(mut commands: Commands) {
         });
 }
 
-fn cleanup_pause(mut commands: Commands, query: Query<Entity, With<PausedEntity>>) {
+pub fn cleanup_pause(mut commands: Commands, query: Query<Entity, With<PausedEntity>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn();
     }
 }
 
-fn handle_pause(mut next_state: ResMut<NextState<InGameState>>, input: Res<ButtonInput<KeyCode>>) {
+pub fn handle_pause(mut next_state: ResMut<NextState<InGameState>>, input: Res<ButtonInput<KeyCode>>) {
     if input.just_pressed(KeyCode::Escape) {
         next_state.set(InGameState::Paused);
     }
 }
 
-fn handle_depause(
+pub fn handle_depause(
     mut next_state: ResMut<NextState<InGameState>>,
     input: Res<ButtonInput<KeyCode>>,
 ) {
@@ -110,7 +113,7 @@ fn handle_depause(
     }
 }
 
-fn handle_button_resume(
+pub fn handle_button_resume(
     mut next_state: ResMut<NextState<InGameState>>,
     interaction_q: Query<&Interaction, (With<ButtonResume>, Changed<Interaction>)>,
 ) {

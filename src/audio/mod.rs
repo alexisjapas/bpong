@@ -3,10 +3,10 @@ use bevy::prelude::*;
 pub struct AudioPlugin;
 
 #[derive(Resource)]
-struct SoundAssets {
-    ping: Handle<AudioSource>,
-    pong: Handle<AudioSource>,
-    ee: Vec<Handle<AudioSource>>,
+pub struct SoundAssets {
+    pub ping: Handle<AudioSource>,
+    pub pong: Handle<AudioSource>,
+    pub ee: Vec<Handle<AudioSource>>,
 }
 
 impl Plugin for AudioPlugin {

@@ -1,6 +1,17 @@
+#![allow(clippy::type_complexity)]
+
+mod constants;
+mod state;
+mod game;
+mod ui;
+mod audio;
+
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
+
+use crate::constants::*;
+use crate::state::{GameState, InGameState};
 
 fn main() {
     // Generic setup
@@ -9,6 +20,9 @@ fn main() {
         EmbeddedAssetPlugin {
             mode: PluginMode::ReplaceDefault,
         },
+        game::GamePlugin,
+        ui::UiPlugin,
+        audio::AudioPlugin,
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "BPONG".into(),
@@ -21,16 +35,6 @@ fn main() {
     app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
     app.add_systems(Startup, setup_camera);
     app.init_state::<GameState>().add_sub_state::<InGameState>();
-
-    // InGame
-    app.add_systems(
-        Update,
-        (
-            handle_pause,
-            handle_game_over,
-        )
-            .run_if(in_state(InGameState::Playing)),
-    );
 
     // Run
     app.run();

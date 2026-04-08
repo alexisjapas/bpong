@@ -1,6 +1,15 @@
 use bevy::prelude::*;
 
-fn spawn_scores(mut commands: Commands) {
+use crate::constants::*;
+use crate::game::paddle::{Health, InGameEntity, PlayerLeft, PlayerRight};
+
+#[derive(Component)]
+pub(crate) struct ScorePlayerLeft;
+
+#[derive(Component)]
+pub(crate) struct ScorePlayerRight;
+
+pub fn spawn_scores(mut commands: Commands) {
     let root_node = Node {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
@@ -51,20 +60,21 @@ fn spawn_scores(mut commands: Commands) {
         });
 }
 
-fn update_scores(
+pub fn update_scores(
     pleft_health_q: Query<&Health, (With<PlayerLeft>, Changed<Health>)>,
     pright_health_q: Query<&Health, (With<PlayerRight>, Changed<Health>)>,
     mut pleft_text_q: Query<&mut Text, (With<ScorePlayerLeft>, Without<ScorePlayerRight>)>,
     mut pright_text_q: Query<&mut Text, (With<ScorePlayerRight>, Without<ScorePlayerLeft>)>,
 ) {
-    if let Ok(pleft_health) = pleft_health_q.single() {
-        if let Ok(mut pleft_text) = pleft_text_q.single_mut() {
-            pleft_text.0 = format!("{}", pleft_health.0);
-        }
+    if let Ok(pleft_health) = pleft_health_q.single()
+        && let Ok(mut pleft_text) = pleft_text_q.single_mut()
+    {
+        pleft_text.0 = format!("{}", pleft_health.0);
     }
-    if let Ok(pright_health) = pright_health_q.single() {
-        if let Ok(mut pright_text) = pright_text_q.single_mut() {
-            pright_text.0 = format!("{}", pright_health.0);
-        }
+
+    if let Ok(pright_health) = pright_health_q.single()
+        && let Ok(mut pright_text) = pright_text_q.single_mut()
+    {
+        pright_text.0 = format!("{}", pright_health.0);
     }
 }

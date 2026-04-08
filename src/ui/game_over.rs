@@ -1,9 +1,11 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-struct GameOverEntity;
+use crate::ui::shared::{ButtonRestart, ButtonMenu, ButtonExit};
 
-fn setup_game_over(mut commands: Commands) {
+#[derive(Component)]
+pub(crate) struct GameOverEntity;
+
+pub fn setup_game_over(mut commands: Commands) {
     let root_node = Node {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
@@ -26,7 +28,7 @@ fn setup_game_over(mut commands: Commands) {
                 ..default()
             };
             parent.spawn(container_title).with_child((
-                Text::new(format!("GAME OVER")),
+                Text::new("GAME OVER"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 TextFont {
@@ -45,7 +47,7 @@ fn setup_game_over(mut commands: Commands) {
                 ..default()
             };
             parent.spawn(container_button_restart).with_child((
-                Text::new(format!("PLAY AGAIN")),
+                Text::new("PLAY AGAIN"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonRestart,
@@ -62,7 +64,7 @@ fn setup_game_over(mut commands: Commands) {
                 ..default()
             };
             parent.spawn(container_button_menu).with_child((
-                Text::new(format!("MENU")),
+                Text::new("MENU"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonMenu,
@@ -79,7 +81,7 @@ fn setup_game_over(mut commands: Commands) {
                 ..default()
             };
             parent.spawn(container_button_exit).with_child((
-                Text::new(format!("EXIT")),
+                Text::new("EXIT"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonExit,
@@ -88,7 +90,7 @@ fn setup_game_over(mut commands: Commands) {
         });
 }
 
-fn cleanup_game_over(mut commands: Commands, query: Query<Entity, With<GameOverEntity>>) {
+pub fn cleanup_game_over(mut commands: Commands, query: Query<Entity, With<GameOverEntity>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn();
     }

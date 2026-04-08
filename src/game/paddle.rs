@@ -1,18 +1,20 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-struct PlayerLeft;
+use crate::constants::*;
 
 #[derive(Component)]
-struct PlayerRight;
+pub struct PlayerLeft;
 
 #[derive(Component)]
-struct Health(u32);
+pub struct PlayerRight;
 
 #[derive(Component)]
-struct InGameEntity;
+pub struct Health(pub u32);
 
-fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
+#[derive(Component)]
+pub struct InGameEntity;
+
+pub fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
         PlayerLeft,
         Health(INIT_HEALTH),
@@ -29,7 +31,7 @@ fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
     ));
 }
 
-fn move_player_left(
+pub fn move_player_left(
     time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<PlayerLeft>>,
@@ -52,7 +54,7 @@ fn move_player_left(
     }
 }
 
-fn move_player_right(
+pub fn move_player_right(
     time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<PlayerRight>>,
