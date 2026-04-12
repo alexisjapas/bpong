@@ -9,6 +9,7 @@ mod ui;
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
+use avian2d::prelude::*;
 
 use crate::constants::*;
 use crate::state::{GameState, InGameState};
@@ -20,6 +21,7 @@ fn main() {
         EmbeddedAssetPlugin {
             mode: PluginMode::ReplaceDefault,
         },
+        PhysicsPlugins::default(),
         game::GamePlugin,
         ui::UiPlugin,
         audio::AudioPlugin,
@@ -32,6 +34,7 @@ fn main() {
             ..default()
         }),
     ));
+    app.insert_resource(Gravity(Vec2::ZERO));
     app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
     app.add_systems(Startup, setup_camera);
     app.init_state::<GameState>().add_sub_state::<InGameState>();

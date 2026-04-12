@@ -1,3 +1,4 @@
+use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::state::InGameState;
@@ -9,7 +10,8 @@ pub(crate) struct PausedEntity;
 #[derive(Component)]
 pub(crate) struct ButtonResume;
 
-pub fn setup_pause(mut commands: Commands) {
+pub fn setup_pause(mut commands: Commands, mut physics: ResMut<Time<Physics>>) {
+    physics.pause();
     let root_node = Node {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
@@ -92,7 +94,8 @@ pub fn setup_pause(mut commands: Commands) {
         });
 }
 
-pub fn cleanup_pause(mut commands: Commands, query: Query<Entity, With<PausedEntity>>) {
+pub fn cleanup_pause(mut commands: Commands, query: Query<Entity, With<PausedEntity>>, mut physics: ResMut<Time<Physics>>) {
+    physics.unpause();
     for entity in query.iter() {
         commands.entity(entity).despawn();
     }

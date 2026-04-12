@@ -1,15 +1,16 @@
+use avian2d::prelude::{Collider, RigidBody};
 use bevy::prelude::*;
 
 use crate::constants::*;
 
 #[derive(Component)]
-pub struct PlayerLeft;
+pub struct Paddle;
 
 #[derive(Component)]
-pub struct PlayerRight;
+pub struct Left;
 
 #[derive(Component)]
-pub struct Health(pub u32);
+pub struct Right;
 
 #[derive(Component)]
 pub struct InGameEntity;
@@ -20,32 +21,36 @@ pub struct PaddleControls {
     pub down: KeyCode,
 }
 
-pub fn spawn_players(asset_server: Res<AssetServer>, mut commands: Commands) {
+pub fn spawn_paddles(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands.spawn((
-        PlayerLeft,
-        Health(INIT_HEALTH),
+        Paddle,
+        Left,
         PaddleControls {
             up: KeyCode::KeyW,
             down: KeyCode::KeyS,
         },
-        Transform::from_xyz(-DEMI_SCREEN_WIDTH + PADDLE_WIDTH, 0.0, 0.0),
+        RigidBody::Kinematic,
+        Collider::rectangle(PADDLE_WIDTH, PADDLE_HEIGHT),
+        Transform::from_xyz(-HALF_SCREEN_WIDTH + PADDLE_WIDTH, 0.0, 0.0),
         Sprite::from_image(asset_server.load("imgs/paddle.png")),
         InGameEntity,
     ));
     commands.spawn((
-        PlayerRight,
-        Health(INIT_HEALTH),
+        Paddle,
+        Right,
         PaddleControls {
             up: KeyCode::ArrowUp,
             down: KeyCode::ArrowDown,
         },
-        Transform::from_xyz(DEMI_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
+        RigidBody::Kinematic,
+        Collider::rectangle(PADDLE_WIDTH, PADDLE_HEIGHT),
+        Transform::from_xyz(HALF_SCREEN_WIDTH - PADDLE_WIDTH, 0.0, 0.0),
         Sprite::from_image(asset_server.load("imgs/paddle.png")),
         InGameEntity,
     ));
 }
 
-pub fn move_players(
+pub fn move_paddles(
     time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Transform, &PaddleControls)>,
@@ -54,15 +59,15 @@ pub fn move_players(
         if input.pressed(controls.up) {
             transform.translation.y = (transform.translation.y + PADDLE_SPEED * time.delta_secs())
                 .clamp(
-                    -DEMI_SCREEN_HEIGHT + DEMI_PADDLE_HEIGHT,
-                    DEMI_SCREEN_HEIGHT - DEMI_PADDLE_HEIGHT,
+                    -HALF_SCREEN_HEIGHT + HALF_PADDLE_HEIGHT,
+                    HALF_SCREEN_HEIGHT - HALF_PADDLE_HEIGHT,
                 );
         }
         if input.pressed(controls.down) {
             transform.translation.y = (transform.translation.y - PADDLE_SPEED * time.delta_secs())
                 .clamp(
-                    -DEMI_SCREEN_HEIGHT + DEMI_PADDLE_HEIGHT,
-                    DEMI_SCREEN_HEIGHT - DEMI_PADDLE_HEIGHT,
+                    -HALF_SCREEN_HEIGHT + HALF_PADDLE_HEIGHT,
+                    HALF_SCREEN_HEIGHT - HALF_PADDLE_HEIGHT,
                 );
         }
     }

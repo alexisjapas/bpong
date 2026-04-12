@@ -1,22 +1,17 @@
 # Bevy Pong
 ## Roadmap
-### Minimal
-- Fix paddle-tunneling
-- Github CI/CD
-  - Web
-  - Linux
-  - MacOS
-  - Windows
-
-### Improvements
+### WIP
 - Generic inputs (keyboard+gamepad)
+- Re-design
+
+### Next
 - Game-modes
   - Solo (vs walls)
   - AI
   - Collab (time/speed)
 - Powers
-- Re-design
 
-### Optimization
+### Backlog
 - Perf profiling
 - Detach physics from rendering
+- Web compilation

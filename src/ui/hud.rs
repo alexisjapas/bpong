@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 
 use crate::constants::*;
-use crate::game::paddle::{Health, InGameEntity, PlayerLeft, PlayerRight};
+use crate::game::paddle::InGameEntity;
+use crate::game::scoring::Scoreboard;
 
 #[derive(Component)]
-pub(crate) struct ScorePlayerLeft;
+pub(crate) struct ScoreLeft;
 
 #[derive(Component)]
-pub(crate) struct ScorePlayerRight;
+pub(crate) struct ScoreRight;
 
 pub fn spawn_scores(mut commands: Commands) {
     let root_node = Node {
@@ -20,8 +21,8 @@ pub fn spawn_scores(mut commands: Commands) {
     commands
         .spawn((root_node, InGameEntity))
         .with_children(|parent| {
-            // PlayerLeft score
-            let container_pleft = Node {
+            // Left score
+            let container_left = Node {
                 width: Val::Percent(50.),
                 height: Val::Percent(100.),
                 align_items: AlignItems::FlexStart,
@@ -29,17 +30,17 @@ pub fn spawn_scores(mut commands: Commands) {
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
-            parent.spawn(container_pleft).with_children(|pleft_parent| {
-                pleft_parent.spawn((
+            parent.spawn(container_left).with_children(|left_parent| {
+                left_parent.spawn((
                     Text::new(format!("{}", INIT_HEALTH)),
                     TextColor(Color::WHITE),
                     TextLayout::new_with_justify(Justify::Right),
-                    ScorePlayerLeft,
+                    ScoreLeft,
                 ));
             });
 
-            // PlayerRight score
-            let container_pright = Node {
+            // Right score
+            let container_right = Node {
                 width: Val::Percent(50.),
                 height: Val::Percent(100.),
                 align_items: AlignItems::FlexStart,
@@ -48,33 +49,32 @@ pub fn spawn_scores(mut commands: Commands) {
                 ..default()
             };
             parent
-                .spawn(container_pright)
-                .with_children(|pright_parent| {
-                    pright_parent.spawn((
+                .spawn(container_right)
+                .with_children(|right_parent| {
+                    right_parent.spawn((
                         Text::new(format!("{}", INIT_HEALTH)),
                         TextColor(Color::WHITE),
                         TextLayout::new_with_justify(Justify::Left),
-                        ScorePlayerRight,
+                        ScoreRight,
                     ));
                 });
         });
 }
 
 pub fn update_scores(
-    pleft_health_q: Query<&Health, (With<PlayerLeft>, Changed<Health>)>,
-    pright_health_q: Query<&Health, (With<PlayerRight>, Changed<Health>)>,
-    mut pleft_text_q: Query<&mut Text, (With<ScorePlayerLeft>, Without<ScorePlayerRight>)>,
-    mut pright_text_q: Query<&mut Text, (With<ScorePlayerRight>, Without<ScorePlayerLeft>)>,
+    scoreboard: Res<Scoreboard>,
+    mut left_text_q: Query<&mut Text, (With<ScoreLeft>, Without<ScoreRight>)>,
+    mut right_text_q: Query<&mut Text, (With<ScoreRight>, Without<ScoreLeft>)>,
 ) {
-    if let Ok(pleft_health) = pleft_health_q.single()
-        && let Ok(mut pleft_text) = pleft_text_q.single_mut()
-    {
-        pleft_text.0 = format!("{}", pleft_health.0);
+    if !scoreboard.is_changed() {
+        return;
     }
 
-    if let Ok(pright_health) = pright_health_q.single()
-        && let Ok(mut pright_text) = pright_text_q.single_mut()
-    {
-        pright_text.0 = format!("{}", pright_health.0);
+    if let Ok(mut left_text) = left_text_q.single_mut() {
+        left_text.0 = format!("{}", scoreboard.left);
+    }
+
+    if let Ok(mut right_text) = right_text_q.single_mut() {
+        right_text.0 = format!("{}", scoreboard.right);
     }
 }
