@@ -42,7 +42,10 @@ fn cleanup_ingame(mut commands: Commands, query: Query<Entity, With<InGameEntity
     }
 }
 
-fn restart_game(mut next_state: ResMut<NextState<GameState>>, mut scoreboard: ResMut<scoring::Scoreboard>) {
+fn restart_game(
+    mut next_state: ResMut<NextState<GameState>>,
+    mut scoreboard: ResMut<scoring::Scoreboard>,
+) {
     scoreboard.left = INIT_HEALTH;
     scoreboard.right = INIT_HEALTH;
     next_state.set(GameState::InGame);

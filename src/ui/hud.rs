@@ -48,16 +48,14 @@ pub fn spawn_scores(mut commands: Commands) {
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
-            parent
-                .spawn(container_right)
-                .with_children(|right_parent| {
-                    right_parent.spawn((
-                        Text::new(format!("{}", INIT_HEALTH)),
-                        TextColor(Color::WHITE),
-                        TextLayout::new_with_justify(Justify::Left),
-                        ScoreRight,
-                    ));
-                });
+            parent.spawn(container_right).with_children(|right_parent| {
+                right_parent.spawn((
+                    Text::new(format!("{}", INIT_HEALTH)),
+                    TextColor(Color::WHITE),
+                    TextLayout::new_with_justify(Justify::Left),
+                    ScoreRight,
+                ));
+            });
         });
 }
 

@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use avian2d::prelude::*;
+use bevy::prelude::*;
 
 use crate::constants::*;
 use crate::game::paddle::InGameEntity;

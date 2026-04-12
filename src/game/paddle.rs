@@ -1,4 +1,4 @@
-use avian2d::prelude::{Collider, RigidBody};
+use avian2d::prelude::{Collider, Position, RigidBody};
 use bevy::prelude::*;
 
 use crate::constants::*;
@@ -53,22 +53,20 @@ pub fn spawn_paddles(asset_server: Res<AssetServer>, mut commands: Commands) {
 pub fn move_paddles(
     time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Transform, &PaddleControls)>,
+    mut query: Query<(&mut Position, &PaddleControls)>,
 ) {
-    for (mut transform, controls) in query.iter_mut() {
+    for (mut pos, controls) in query.iter_mut() {
         if input.pressed(controls.up) {
-            transform.translation.y = (transform.translation.y + PADDLE_SPEED * time.delta_secs())
-                .clamp(
-                    -HALF_SCREEN_HEIGHT + HALF_PADDLE_HEIGHT,
-                    HALF_SCREEN_HEIGHT - HALF_PADDLE_HEIGHT,
-                );
+            pos.0.y = (pos.0.y + PADDLE_SPEED * time.delta_secs()).clamp(
+                -HALF_SCREEN_HEIGHT + HALF_PADDLE_HEIGHT,
+                HALF_SCREEN_HEIGHT - HALF_PADDLE_HEIGHT,
+            );
         }
         if input.pressed(controls.down) {
-            transform.translation.y = (transform.translation.y - PADDLE_SPEED * time.delta_secs())
-                .clamp(
-                    -HALF_SCREEN_HEIGHT + HALF_PADDLE_HEIGHT,
-                    HALF_SCREEN_HEIGHT - HALF_PADDLE_HEIGHT,
-                );
+            pos.0.y = (pos.0.y - PADDLE_SPEED * time.delta_secs()).clamp(
+                -HALF_SCREEN_HEIGHT + HALF_PADDLE_HEIGHT,
+                HALF_SCREEN_HEIGHT - HALF_PADDLE_HEIGHT,
+            );
         }
     }
 }

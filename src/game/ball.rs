@@ -38,18 +38,18 @@ pub fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
 
 fn on_paddle_collision(
     collision: On<CollisionStart>,
-    paddle_query: Query<(Has<Left>, &Transform), (With<Paddle>, Without<Ball>)>,
-    mut ball_query: Query<(&Transform, &mut LinearVelocity, &mut Speed), With<Ball>>,
+    paddle_query: Query<(Has<Left>, &Position), (With<Paddle>, Without<Ball>)>,
+    mut ball_query: Query<(&Position, &mut LinearVelocity, &mut Speed), With<Ball>>,
     sounds: Res<SoundAssets>,
     mut commands: Commands,
 ) {
     let ball = collision.collider1;
     let paddle = collision.collider2;
 
-    let Ok((is_left, paddle_transform)) = paddle_query.get(paddle) else {
+    let Ok((is_left, paddle_pos)) = paddle_query.get(paddle) else {
         return;
     };
-    let Ok((ball_transform, mut velocity, mut speed)) = ball_query.get_mut(ball) else {
+    let Ok((ball_pos, mut velocity, mut speed)) = ball_query.get_mut(ball) else {
         return;
     };
 
@@ -61,9 +61,7 @@ fn on_paddle_collision(
     }
 
     // Impact ratio: -1.0 (bottom) to 1.0 (top)
-    let ratio = ((ball_transform.translation.y - paddle_transform.translation.y)
-        / HALF_PADDLE_HEIGHT)
-        .clamp(-1.0, 1.0);
+    let ratio = ((ball_pos.0.y - paddle_pos.0.y) / HALF_PADDLE_HEIGHT).clamp(-1.0, 1.0);
     let abs_ratio = ratio.abs();
 
     // Bounce angle: center → straight, edges → up to MAX_BOUNCE_ANGLE

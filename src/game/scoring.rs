@@ -33,10 +33,7 @@ pub fn handle_scoring(
     }
 }
 
-pub fn handle_game_over(
-    scoreboard: Res<Scoreboard>,
-    mut next_state: ResMut<NextState<GameState>>,
-) {
+pub fn handle_game_over(scoreboard: Res<Scoreboard>, mut next_state: ResMut<NextState<GameState>>) {
     if scoreboard.left == 0 || scoreboard.right == 0 {
         next_state.set(GameState::GameOver);
     }

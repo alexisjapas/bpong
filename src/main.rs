@@ -6,10 +6,10 @@ mod game;
 mod state;
 mod ui;
 
+use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
-use avian2d::prelude::*;
 
 use crate::constants::*;
 use crate::state::{GameState, InGameState};

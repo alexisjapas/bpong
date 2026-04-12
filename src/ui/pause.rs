@@ -94,7 +94,11 @@ pub fn setup_pause(mut commands: Commands, mut physics: ResMut<Time<Physics>>) {
         });
 }
 
-pub fn cleanup_pause(mut commands: Commands, query: Query<Entity, With<PausedEntity>>, mut physics: ResMut<Time<Physics>>) {
+pub fn cleanup_pause(
+    mut commands: Commands,
+    query: Query<Entity, With<PausedEntity>>,
+    mut physics: ResMut<Time<Physics>>,
+) {
     physics.unpause();
     for entity in query.iter() {
         commands.entity(entity).despawn();
