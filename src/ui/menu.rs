@@ -43,7 +43,7 @@ pub fn handle_button_title(
     }
 }
 
-pub fn setup_menu(mut commands: Commands) {
+pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     let root_node = Node {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
@@ -70,6 +70,7 @@ pub fn setup_menu(mut commands: Commands) {
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
                     font_size: 64.,
                     ..default()
                 },
@@ -90,6 +91,10 @@ pub fn setup_menu(mut commands: Commands) {
                 Text::new("PLAY"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 ButtonPlay,
                 Button,
             ));
@@ -105,6 +110,10 @@ pub fn setup_menu(mut commands: Commands) {
             };
             parent.spawn(container_button_exit).with_child((
                 Text::new("EXIT"),
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonExit,

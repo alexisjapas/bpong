@@ -10,7 +10,7 @@ pub(crate) struct ScoreLeft;
 #[derive(Component)]
 pub(crate) struct ScoreRight;
 
-pub fn spawn_scores(mut commands: Commands) {
+pub fn spawn_scores(mut commands: Commands, asset_server: Res<AssetServer>) {
     let root_node = Node {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
@@ -33,6 +33,10 @@ pub fn spawn_scores(mut commands: Commands) {
             parent.spawn(container_left).with_children(|left_parent| {
                 left_parent.spawn((
                     Text::new(format!("{}", INIT_HEALTH)),
+                    TextFont {
+                        font: asset_server.load("fonts/bpong.otf"),
+                        ..default()
+                    },
                     TextColor(Color::WHITE),
                     TextLayout::new_with_justify(Justify::Right),
                     ScoreLeft,
@@ -51,6 +55,10 @@ pub fn spawn_scores(mut commands: Commands) {
             parent.spawn(container_right).with_children(|right_parent| {
                 right_parent.spawn((
                     Text::new(format!("{}", INIT_HEALTH)),
+                    TextFont {
+                        font: asset_server.load("fonts/bpong.otf"),
+                        ..default()
+                    },
                     TextColor(Color::WHITE),
                     TextLayout::new_with_justify(Justify::Left),
                     ScoreRight,

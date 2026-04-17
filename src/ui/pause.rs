@@ -10,7 +10,11 @@ pub(crate) struct PausedEntity;
 #[derive(Component)]
 pub(crate) struct ButtonResume;
 
-pub fn setup_pause(mut commands: Commands, mut physics: ResMut<Time<Physics>>) {
+pub fn setup_pause(
+    mut commands: Commands,
+    mut physics: ResMut<Time<Physics>>,
+    asset_server: Res<AssetServer>,
+) {
     physics.pause();
     let root_node = Node {
         width: Val::Percent(100.),
@@ -35,6 +39,10 @@ pub fn setup_pause(mut commands: Commands, mut physics: ResMut<Time<Physics>>) {
             };
             parent.spawn(container_button_resume).with_child((
                 Text::new("RESUME"),
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonResume,
@@ -52,6 +60,10 @@ pub fn setup_pause(mut commands: Commands, mut physics: ResMut<Time<Physics>>) {
             };
             parent.spawn(container_button_restart).with_child((
                 Text::new("RESTART"),
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonRestart,
@@ -68,6 +80,10 @@ pub fn setup_pause(mut commands: Commands, mut physics: ResMut<Time<Physics>>) {
                 ..default()
             };
             parent.spawn(container_button_menu).with_child((
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 Text::new("MENU"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
@@ -85,6 +101,10 @@ pub fn setup_pause(mut commands: Commands, mut physics: ResMut<Time<Physics>>) {
                 ..default()
             };
             parent.spawn(container_button_exit).with_child((
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 Text::new("EXIT"),
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),

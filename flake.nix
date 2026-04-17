@@ -107,6 +107,7 @@
               (rust-bin.stable.latest.default.override { extensions = [ "rust-src" ]; })
               pkg-config
               mangohud
+              fontforge
             ]
             ++ lib.optionals (lib.strings.hasInfix "linux" system) [
               alsa-lib

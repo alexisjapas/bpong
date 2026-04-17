@@ -5,7 +5,7 @@ use crate::ui::shared::{ButtonExit, ButtonMenu, ButtonRestart};
 #[derive(Component)]
 pub(crate) struct GameOverEntity;
 
-pub fn setup_game_over(mut commands: Commands) {
+pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
     let root_node = Node {
         width: Val::Percent(100.),
         height: Val::Percent(100.),
@@ -32,6 +32,7 @@ pub fn setup_game_over(mut commands: Commands) {
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
                     font_size: 64.,
                     ..default()
                 },
@@ -48,6 +49,10 @@ pub fn setup_game_over(mut commands: Commands) {
             };
             parent.spawn(container_button_restart).with_child((
                 Text::new("PLAY AGAIN"),
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonRestart,
@@ -65,6 +70,10 @@ pub fn setup_game_over(mut commands: Commands) {
             };
             parent.spawn(container_button_menu).with_child((
                 Text::new("MENU"),
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonMenu,
@@ -82,6 +91,10 @@ pub fn setup_game_over(mut commands: Commands) {
             };
             parent.spawn(container_button_exit).with_child((
                 Text::new("EXIT"),
+                TextFont {
+                    font: asset_server.load("fonts/bpong.otf"),
+                    ..default()
+                },
                 TextColor(Color::WHITE),
                 TextLayout::new_with_justify(Justify::Center),
                 ButtonExit,
