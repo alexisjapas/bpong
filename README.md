@@ -1,8 +1,8 @@
 # Bevy Pong
 ## Roadmap
 ### WIP
-- Generic inputs (keyboard+gamepad)
 - Re-design
+- Generic inputs (keyboard+gamepad)
 
 ### Next
 - Game-modes
