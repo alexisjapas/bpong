@@ -2,7 +2,7 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::state::InGameState;
-use crate::ui::shared::{ButtonExit, ButtonMenu, ButtonRestart};
+use crate::ui::shared::{ButtonMenu, ButtonRestart, button, handle_button_exit};
 
 #[derive(Component)]
 pub(crate) struct PausedEntity;
@@ -92,25 +92,9 @@ pub fn setup_pause(
             ));
 
             // Button Exit
-            let container_button_exit = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_exit).with_child((
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                Text::new("EXIT"),
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                ButtonExit,
-                Button,
-            ));
+            parent
+                .spawn(button("EXIT", &asset_server))
+                .observe(handle_button_exit);
         });
 }
 

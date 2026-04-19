@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::ui::shared::{ButtonExit, ButtonMenu, ButtonRestart};
+use crate::ui::shared::{ButtonMenu, ButtonRestart, button, handle_button_exit};
 
 #[derive(Component)]
 pub(crate) struct GameOverEntity;
@@ -81,25 +81,9 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
             ));
 
             // Button Exit
-            let container_button_exit = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_exit).with_child((
-                Text::new("EXIT"),
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                ButtonExit,
-                Button,
-            ));
+            parent
+                .spawn(button("EXIT", &asset_server))
+                .observe(handle_button_exit);
         });
 }
 

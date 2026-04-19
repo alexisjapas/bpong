@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::audio::SoundAssets;
 use crate::state::GameState;
-use crate::ui::shared::ButtonExit;
+use crate::ui::shared::{button, handle_button_exit};
 
 #[derive(Component)]
 pub(crate) struct MenuEntity;
@@ -10,24 +10,14 @@ pub(crate) struct MenuEntity;
 #[derive(Component)]
 pub(crate) struct ButtonTitleEE;
 
-#[derive(Component)]
-pub(crate) struct ButtonPlay;
-
 pub fn cleanup_menu(mut commands: Commands, query: Query<Entity, With<MenuEntity>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn();
     }
 }
 
-pub fn handle_button_play(
-    mut next_state: ResMut<NextState<GameState>>,
-    interaction_q: Query<&Interaction, (With<ButtonPlay>, Changed<Interaction>)>,
-) {
-    for interaction in interaction_q.iter() {
-        if *interaction == Interaction::Pressed {
-            next_state.set(GameState::InGame);
-        }
-    }
+pub fn handle_button_play(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
+    next_state.set(GameState::InGame);
 }
 
 pub fn handle_button_title(
@@ -52,7 +42,6 @@ pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         align_items: AlignItems::Center,
         ..default()
     };
-
     commands
         .spawn((root_node, MenuEntity))
         .with_children(|parent| {
@@ -78,46 +67,13 @@ pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 Button,
             ));
 
-            // Button Play
-            let container_button_play = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_play).with_child((
-                Text::new("PLAY"),
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                ButtonPlay,
-                Button,
-            ));
+            parent
+                .spawn(button("PLAY", &asset_server))
+                .observe(handle_button_play);
 
             // Button Exit
-            let container_button_exit = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_exit).with_child((
-                Text::new("EXIT"),
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                ButtonExit,
-                Button,
-            ));
+            parent
+                .spawn(button("EXIT", &asset_server))
+                .observe(handle_button_exit);
         });
 }

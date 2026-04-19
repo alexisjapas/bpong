@@ -1,3 +1,5 @@
+use bevy::prelude::*;
+
 pub const SCREEN_WIDTH: f32 = 1280.;
 pub const SCREEN_HEIGHT: f32 = 720.;
 pub const PADDLE_HEIGHT: f32 = 80.;
@@ -17,3 +19,8 @@ pub const HALF_SCREEN_WIDTH: f32 = SCREEN_WIDTH / 2.;
 pub const HALF_SCREEN_HEIGHT: f32 = SCREEN_HEIGHT / 2.;
 pub const HALF_PADDLE_HEIGHT: f32 = PADDLE_HEIGHT / 2.;
 pub const HALF_WALL_THICKNESS: f32 = WALL_THICKNESS / 2.;
+
+// UI
+pub const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
+pub const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
+pub const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);

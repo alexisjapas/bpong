@@ -22,12 +22,7 @@ impl Plugin for UiPlugin {
         app.add_systems(OnEnter(GameState::MainMenu), menu::setup_menu)
             .add_systems(
                 Update,
-                (
-                    menu::handle_button_play,
-                    menu::handle_button_title,
-                    shared::handle_button_exit,
-                )
-                    .run_if(in_state(GameState::MainMenu)),
+                (menu::handle_button_title,).run_if(in_state(GameState::MainMenu)),
             )
             .add_systems(OnExit(GameState::MainMenu), menu::cleanup_menu);
 
@@ -41,7 +36,6 @@ impl Plugin for UiPlugin {
                     pause::handle_button_resume,
                     shared::handle_button_restart,
                     shared::handle_button_menu,
-                    shared::handle_button_exit,
                 )
                     .run_if(in_state(InGameState::Paused)),
             );
@@ -51,11 +45,7 @@ impl Plugin for UiPlugin {
             .add_systems(OnExit(GameState::GameOver), game_over::cleanup_game_over)
             .add_systems(
                 Update,
-                (
-                    shared::handle_button_restart,
-                    shared::handle_button_menu,
-                    shared::handle_button_exit,
-                )
+                (shared::handle_button_restart, shared::handle_button_menu)
                     .run_if(in_state(GameState::GameOver)),
             );
     }
