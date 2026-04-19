@@ -2,7 +2,7 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::state::InGameState;
-use crate::ui::shared::{ButtonMenu, ButtonRestart, button, handle_button_exit};
+use crate::ui::shared::{button, handle_button_exit, handle_button_menu, handle_button_restart};
 
 #[derive(Component)]
 pub(crate) struct PausedEntity;
@@ -28,70 +28,18 @@ pub fn setup_pause(
     commands
         .spawn((root_node, PausedEntity))
         .with_children(|parent| {
-            // Button Resume
-            let container_button_resume = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_resume).with_child((
-                Text::new("RESUME"),
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                ButtonResume,
-                Button,
-            ));
+            parent
+                .spawn(button("RESUME", &asset_server))
+                .observe(handle_button_resume);
 
-            // Button Restart
-            let container_button_restart = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_restart).with_child((
-                Text::new("RESTART"),
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                ButtonRestart,
-                Button,
-            ));
+            parent
+                .spawn(button("RESTART", &asset_server))
+                .observe(handle_button_restart);
 
-            // Button Menu
-            let container_button_menu = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_menu).with_child((
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                Text::new("MENU"),
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                ButtonMenu,
-                Button,
-            ));
+            parent
+                .spawn(button("MENU", &asset_server))
+                .observe(handle_button_menu);
 
-            // Button Exit
             parent
                 .spawn(button("EXIT", &asset_server))
                 .observe(handle_button_exit);
@@ -127,13 +75,6 @@ pub fn handle_depause(
     }
 }
 
-pub fn handle_button_resume(
-    mut next_state: ResMut<NextState<InGameState>>,
-    interaction_q: Query<&Interaction, (With<ButtonResume>, Changed<Interaction>)>,
-) {
-    for interaction in interaction_q.iter() {
-        if *interaction == Interaction::Pressed {
-            next_state.set(InGameState::Playing);
-        }
-    }
+pub fn handle_button_resume(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<InGameState>>) {
+    next_state.set(InGameState::Playing);
 }

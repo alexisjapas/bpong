@@ -21,16 +21,12 @@ pub fn handle_button_play(_: On<Pointer<Click>>, mut next_state: ResMut<NextStat
 }
 
 pub fn handle_button_title(
+    _: On<Pointer<Click>>,
     sounds: Res<SoundAssets>,
     mut commands: Commands,
-    interaction_q: Query<&Interaction, (With<ButtonTitleEE>, Changed<Interaction>)>,
 ) {
     let idx = rand::random_range(0..sounds.ee.len());
-    for interaction in interaction_q.iter() {
-        if *interaction == Interaction::Pressed {
-            commands.spawn(AudioPlayer::new(sounds.ee[idx].clone()));
-        }
-    }
+    commands.spawn(AudioPlayer::new(sounds.ee[idx].clone()));
 }
 
 pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -54,24 +50,25 @@ pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
-            parent.spawn(container_title).with_child((
-                Text::new("BPONG"),
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    font_size: 64.,
-                    ..default()
-                },
-                ButtonTitleEE,
-                Button,
-            ));
+            parent
+                .spawn(container_title)
+                .with_child((
+                    Text::new("BPONG"),
+                    TextColor(Color::WHITE),
+                    TextLayout::new_with_justify(Justify::Center),
+                    TextFont {
+                        font: asset_server.load("fonts/bpong.otf"),
+                        font_size: 64.,
+                        ..default()
+                    },
+                    ButtonTitleEE,
+                    Button,
+                ))
+                .observe(handle_button_title);
 
             parent
                 .spawn(button("PLAY", &asset_server))
                 .observe(handle_button_play);
-
-            // Button Exit
             parent
                 .spawn(button("EXIT", &asset_server))
                 .observe(handle_button_exit);

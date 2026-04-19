@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::ui::shared::{ButtonMenu, ButtonRestart, button, handle_button_exit};
+use crate::ui::shared::{button, handle_button_exit, handle_button_menu, handle_button_restart};
 
 #[derive(Component)]
 pub(crate) struct GameOverEntity;
@@ -38,49 +38,15 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
             ));
 
-            // Button Restart
-            let container_button_restart = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_restart).with_child((
-                Text::new("PLAY AGAIN"),
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                ButtonRestart,
-                Button,
-            ));
+            // Buttons
+            parent
+                .spawn(button("RESTART", &asset_server))
+                .observe(handle_button_restart);
 
-            // Button Menu
-            let container_button_menu = Node {
-                width: Val::Percent(20.),
-                height: Val::Percent(20.),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
-                ..default()
-            };
-            parent.spawn(container_button_menu).with_child((
-                Text::new("MENU"),
-                TextFont {
-                    font: asset_server.load("fonts/bpong.otf"),
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                TextLayout::new_with_justify(Justify::Center),
-                ButtonMenu,
-                Button,
-            ));
+            parent
+                .spawn(button("MENU", &asset_server))
+                .observe(handle_button_menu);
 
-            // Button Exit
             parent
                 .spawn(button("EXIT", &asset_server))
                 .observe(handle_button_exit);

@@ -3,37 +3,17 @@ use bevy::prelude::*;
 use crate::constants::*;
 use crate::state::GameState;
 
-#[derive(Component)]
-pub struct ButtonMenu;
-
-#[derive(Component)]
-pub struct ButtonRestart;
-
 // Systems
 pub fn handle_button_exit(_: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>) {
     exit.write(AppExit::Success);
 }
 
-pub fn handle_button_restart(
-    mut next_state: ResMut<NextState<GameState>>,
-    interaction_q: Query<&Interaction, (With<ButtonRestart>, Changed<Interaction>)>,
-) {
-    for interaction in interaction_q.iter() {
-        if *interaction == Interaction::Pressed {
-            next_state.set(GameState::Restarting);
-        }
-    }
+pub fn handle_button_restart(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
+    next_state.set(GameState::Restarting);
 }
 
-pub fn handle_button_menu(
-    mut next_state: ResMut<NextState<GameState>>,
-    interaction_q: Query<&Interaction, (With<ButtonMenu>, Changed<Interaction>)>,
-) {
-    for interaction in interaction_q.iter() {
-        if *interaction == Interaction::Pressed {
-            next_state.set(GameState::MainMenu);
-        }
-    }
+pub fn handle_button_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
+    next_state.set(GameState::MainMenu);
 }
 
 // Helpers
