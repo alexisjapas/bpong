@@ -35,7 +35,7 @@ fn main() {
         }),
     ));
     app.insert_resource(Gravity(Vec2::ZERO));
-    app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.2)));
+    app.insert_resource(ClearColor(BACKGROUND_COLOR));
     app.add_systems(Startup, setup_camera);
     app.init_state::<GameState>().add_sub_state::<InGameState>();
 

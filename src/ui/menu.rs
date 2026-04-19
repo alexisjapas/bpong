@@ -1,14 +1,12 @@
 use bevy::prelude::*;
 
 use crate::audio::SoundAssets;
+use crate::constants::{TEXT_COLOR, TITLE_CONTAINER_HEIGHT_PERCENTAGE, TITLE_FONT_SIZE};
 use crate::state::GameState;
 use crate::ui::shared::{button, handle_button_exit};
 
 #[derive(Component)]
 pub(crate) struct MenuEntity;
-
-#[derive(Component)]
-pub(crate) struct ButtonTitleEE;
 
 pub fn cleanup_menu(mut commands: Commands, query: Query<Entity, With<MenuEntity>>) {
     for entity in query.iter() {
@@ -44,24 +42,22 @@ pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             // Title
             let container_title = Node {
                 width: Val::Percent(100.),
-                height: Val::Percent(30.),
+                height: Val::Percent(TITLE_CONTAINER_HEIGHT_PERCENTAGE),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(8.)),
                 ..default()
             };
             parent
                 .spawn(container_title)
                 .with_child((
                     Text::new("BPONG"),
-                    TextColor(Color::WHITE),
+                    TextColor(TEXT_COLOR),
                     TextLayout::new_with_justify(Justify::Center),
                     TextFont {
                         font: asset_server.load("fonts/bpong.otf"),
-                        font_size: 64.,
+                        font_size: TITLE_FONT_SIZE,
                         ..default()
                     },
-                    ButtonTitleEE,
                     Button,
                 ))
                 .observe(handle_button_title);

@@ -21,6 +21,16 @@ pub const HALF_PADDLE_HEIGHT: f32 = PADDLE_HEIGHT / 2.;
 pub const HALF_WALL_THICKNESS: f32 = WALL_THICKNESS / 2.;
 
 // UI
-pub const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
-pub const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-pub const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+pub const BACKGROUND_COLOR: Color = Color::srgb(0.1, 0.1, 0.2);
+pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
+
+pub const TITLE_CONTAINER_HEIGHT_PERCENTAGE: f32 = 28.;
+pub const TITLE_FONT_SIZE: f32 = 64.;
+
+pub const BUTTON_FONT_SIZE: f32 = 32.;
+pub const BUTTON_WIDTH: f32 = BUTTON_FONT_SIZE * (7. + 2.);
+pub const BUTTON_HEIGHT: f32 = BUTTON_FONT_SIZE * 2.;
+pub const BUTTON_SPACING: f32 = 16.;
+pub const BUTTON_COLOR: Color = Color::srgba(0.15, 0.15, 0.15, 0.8);
+// pub const BUTTON_COLOR_HOVER: Color = Color::srgb(0.25, 0.25, 0.25);
+// pub const BUTTON_COLOR_PRESSED: Color = Color::srgb(0.35, 0.75, 0.35);

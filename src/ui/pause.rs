@@ -7,9 +7,6 @@ use crate::ui::shared::{button, handle_button_exit, handle_button_menu, handle_b
 #[derive(Component)]
 pub(crate) struct PausedEntity;
 
-#[derive(Component)]
-pub(crate) struct ButtonResume;
-
 pub fn setup_pause(
     mut commands: Commands,
     mut physics: ResMut<Time<Physics>>,
