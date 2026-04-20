@@ -32,5 +32,5 @@ pub const BUTTON_WIDTH: f32 = BUTTON_FONT_SIZE * (7. + 2.);
 pub const BUTTON_HEIGHT: f32 = BUTTON_FONT_SIZE * 2.;
 pub const BUTTON_SPACING: f32 = 16.;
 pub const BUTTON_COLOR: Color = Color::srgba(0.15, 0.15, 0.15, 0.8);
-// pub const BUTTON_COLOR_HOVER: Color = Color::srgb(0.25, 0.25, 0.25);
-// pub const BUTTON_COLOR_PRESSED: Color = Color::srgb(0.35, 0.75, 0.35);
+pub const BUTTON_COLOR_HOVER: Color = Color::srgb(0.25, 0.25, 0.25);
+pub const BUTTON_COLOR_PRESSED: Color = Color::srgb(0.35, 0.75, 0.35);

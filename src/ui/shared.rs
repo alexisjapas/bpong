@@ -3,22 +3,14 @@ use bevy::prelude::*;
 use crate::constants::*;
 use crate::state::GameState;
 
-// Systems
-pub fn on_button_exit(_: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>) {
-    exit.write(AppExit::Success);
-}
-
-pub fn on_button_restart(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
-    next_state.set(GameState::Restarting);
-}
-
-pub fn on_button_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
-    next_state.set(GameState::MainMenu);
-}
+// Components
+#[derive(Component)]
+pub struct InteractiveButton;
 
 // Helpers
 pub fn button(text: &str, asset_server: &AssetServer) -> impl Bundle {
     (
+        InteractiveButton,
         Button,
         Node {
             width: Val::Px(BUTTON_WIDTH),
@@ -42,4 +34,38 @@ pub fn button(text: &str, asset_server: &AssetServer) -> impl Bundle {
             TextShadow::default(),
         )],
     )
+}
+
+// Systems
+pub fn handle_button_interaction(
+    mut button_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (With<InteractiveButton>, Changed<Interaction>),
+    >,
+) {
+    for (interaction, mut bg_color) in button_query.iter_mut() {
+        match *interaction {
+            Interaction::Hovered => {
+                bg_color.0 = BUTTON_COLOR_HOVER;
+            }
+            Interaction::Pressed => {
+                bg_color.0 = BUTTON_COLOR_PRESSED;
+            }
+            Interaction::None => {
+                bg_color.0 = BUTTON_COLOR;
+            }
+        }
+    }
+}
+
+pub fn on_button_exit(_: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>) {
+    exit.write(AppExit::Success);
+}
+
+pub fn on_button_restart(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
+    next_state.set(GameState::Restarting);
+}
+
+pub fn on_button_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
+    next_state.set(GameState::MainMenu);
 }

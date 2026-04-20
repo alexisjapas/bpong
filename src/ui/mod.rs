@@ -11,6 +11,8 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(Update, shared::handle_button_interaction);
+
         // HUD
         app.add_systems(OnEnter(GameState::InGame), hud::spawn_scores)
             .add_systems(

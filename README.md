@@ -1,8 +1,8 @@
 # Bevy Pong
 ## Roadmap
 ### WIP
-- Re-design
 - Generic inputs (keyboard+gamepad)
+- Increase paddle speed with ball
 
 ### Next
 - Game-modes
