@@ -4,15 +4,15 @@ use crate::constants::*;
 use crate::state::GameState;
 
 // Systems
-pub fn handle_button_exit(_: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>) {
+pub fn on_button_exit(_: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>) {
     exit.write(AppExit::Success);
 }
 
-pub fn handle_button_restart(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
+pub fn on_button_restart(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
     next_state.set(GameState::Restarting);
 }
 
-pub fn handle_button_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
+pub fn on_button_menu(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<GameState>>) {
     next_state.set(GameState::MainMenu);
 }
 

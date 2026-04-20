@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     constants::*,
-    ui::shared::{button, handle_button_exit, handle_button_menu, handle_button_restart},
+    ui::shared::{button, on_button_exit, on_button_menu, on_button_restart},
 };
 
 #[derive(Component)]
@@ -43,15 +43,15 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
             // Buttons
             parent
                 .spawn(button("RESTART", &asset_server))
-                .observe(handle_button_restart);
+                .observe(on_button_restart);
 
             parent
                 .spawn(button("MENU", &asset_server))
-                .observe(handle_button_menu);
+                .observe(on_button_menu);
 
             parent
                 .spawn(button("EXIT", &asset_server))
-                .observe(handle_button_exit);
+                .observe(on_button_exit);
         });
 }
 

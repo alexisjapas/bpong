@@ -2,7 +2,7 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::state::InGameState;
-use crate::ui::shared::{button, handle_button_exit, handle_button_menu, handle_button_restart};
+use crate::ui::shared::{button, on_button_exit, on_button_menu, on_button_restart};
 
 #[derive(Component)]
 pub(crate) struct PausedEntity;
@@ -27,19 +27,19 @@ pub fn setup_pause(
         .with_children(|parent| {
             parent
                 .spawn(button("RESUME", &asset_server))
-                .observe(handle_button_resume);
+                .observe(on_button_resume);
 
             parent
                 .spawn(button("RESTART", &asset_server))
-                .observe(handle_button_restart);
+                .observe(on_button_restart);
 
             parent
                 .spawn(button("MENU", &asset_server))
-                .observe(handle_button_menu);
+                .observe(on_button_menu);
 
             parent
                 .spawn(button("EXIT", &asset_server))
-                .observe(handle_button_exit);
+                .observe(on_button_exit);
         });
 }
 
@@ -72,6 +72,6 @@ pub fn handle_depause(
     }
 }
 
-pub fn handle_button_resume(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<InGameState>>) {
+pub fn on_button_resume(_: On<Pointer<Click>>, mut next_state: ResMut<NextState<InGameState>>) {
     next_state.set(InGameState::Playing);
 }
