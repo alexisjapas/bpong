@@ -14,11 +14,14 @@ impl Plugin for UiPlugin {
         app.add_systems(Update, shared::handle_button_interaction);
 
         // HUD
-        app.add_systems(OnEnter(GameState::InGame), hud::spawn_scores)
-            .add_systems(
-                Update,
-                hud::update_scores.run_if(in_state(InGameState::Playing)),
-            );
+        app.add_systems(
+            OnEnter(GameState::InGame),
+            (hud::spawn_scores, hud::spawn_stats),
+        )
+        .add_systems(
+            Update,
+            (hud::update_scores, hud::update_stats).run_if(in_state(InGameState::Playing)),
+        );
 
         // Menu
         app.add_systems(OnEnter(GameState::MainMenu), menu::setup_menu)

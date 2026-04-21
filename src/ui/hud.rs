@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::constants::*;
+use crate::game::ball::{Ball, Speed};
 use crate::game::paddle::InGameEntity;
 use crate::game::scoring::Scoreboard;
 
@@ -9,6 +10,9 @@ pub(crate) struct ScoreLeft;
 
 #[derive(Component)]
 pub(crate) struct ScoreRight;
+
+#[derive(Component)]
+pub(crate) struct BallStats;
 
 pub fn spawn_scores(mut commands: Commands, asset_server: Res<AssetServer>) {
     let root_node = Node {
@@ -82,5 +86,39 @@ pub fn update_scores(
 
     if let Ok(mut right_text) = right_text_q.single_mut() {
         right_text.0 = format!("{}", scoreboard.right);
+    }
+}
+
+pub fn spawn_stats(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let root_node = Node {
+        width: Val::Percent(100.),
+        height: Val::Percent(100.),
+        flex_direction: FlexDirection::Row,
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::FlexEnd,
+        padding: UiRect::all(Val::Px(8.)),
+        ..default()
+    };
+
+    commands.spawn((root_node, InGameEntity)).with_child((
+        Text::new(format!("{}", BALL_INITIAL_SPEED)),
+        TextFont {
+            font: asset_server.load("fonts/bpong.otf"),
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        TextLayout::new_with_justify(Justify::Center),
+        BallStats,
+    ));
+}
+
+pub fn update_stats(
+    ball_query: Query<&Speed, (With<Ball>, Changed<Speed>)>,
+    mut ball_stats_text: Query<&mut Text, With<BallStats>>,
+) {
+    if let Ok(speed) = ball_query.single()
+        && let Ok(mut text) = ball_stats_text.single_mut()
+    {
+        text.0 = format!("{:.0}", speed.0);
     }
 }
