@@ -8,11 +8,10 @@
   };
 
   outputs =
-    {
-      nixpkgs,
-      rust-overlay,
-      flake-utils,
-      ...
+    { nixpkgs
+    , rust-overlay
+    , flake-utils
+    , ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -92,9 +91,11 @@
         customAliases = map (s: s.pkg) allScripts;
 
         # ── Help table for shellHook ──────────────────────────────────────────
-        helpLines = pkgs.lib.concatMapStrings (
-          s: ''printf "    %-22s %s\n" "${s.name}" "${s.desc}"'' + "\n"
-        ) allScripts;
+        helpLines = pkgs.lib.concatMapStrings
+          (
+            s: ''printf "    %-22s %s\n" "${s.name}" "${s.desc}"'' + "\n"
+          )
+          allScripts;
 
       in
       {

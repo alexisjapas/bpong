@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
 use crate::constants::*;
-use crate::game::ball::{Ball, Speed};
+use crate::game::ball::Ball;
 use crate::game::paddle::InGameEntity;
 use crate::game::scoring::Scoreboard;
+use crate::game::shared::Speed;
 
 #[derive(Component)]
 pub(crate) struct ScoreLeft;

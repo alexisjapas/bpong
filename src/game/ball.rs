@@ -4,12 +4,10 @@ use bevy::prelude::*;
 use crate::audio::SoundAssets;
 use crate::constants::*;
 use crate::game::paddle::{InGameEntity, Left, Paddle};
+use crate::game::shared::Speed;
 
 #[derive(Component)]
 pub struct Ball;
-
-#[derive(Component)]
-pub struct Speed(pub f32);
 
 pub fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
     commands
@@ -38,15 +36,18 @@ pub fn spawn_ball(asset_server: Res<AssetServer>, mut commands: Commands) {
 
 fn on_paddle_collision(
     collision: On<CollisionStart>,
-    paddle_query: Query<(Has<Left>, &Position), (With<Paddle>, Without<Ball>)>,
-    mut ball_query: Query<(&Position, &mut LinearVelocity, &mut Speed), With<Ball>>,
+    mut paddle_query: Query<(Has<Left>, &Position, &mut Speed), (With<Paddle>, Without<Ball>)>,
+    mut ball_query: Query<
+        (&Position, &mut LinearVelocity, &mut Speed),
+        (With<Ball>, Without<Paddle>),
+    >,
     sounds: Res<SoundAssets>,
     mut commands: Commands,
 ) {
     let ball = collision.collider1;
     let paddle = collision.collider2;
 
-    let Ok((is_left, paddle_pos)) = paddle_query.get(paddle) else {
+    let Ok((is_left, paddle_pos, mut paddle_speed)) = paddle_query.get_mut(paddle) else {
         return;
     };
     let Ok((ball_pos, mut velocity, mut speed)) = ball_query.get_mut(ball) else {
@@ -81,8 +82,11 @@ fn on_paddle_collision(
     let direction = Vec2::new(dir_x * angle.cos(), dir_y).normalize();
 
     // Speed boost: center → BALL_BOOST_CENTER, edges → BALL_BOOST_EDGE
-    let boost = BALL_BOOST_CENTER - (BALL_BOOST_CENTER - BALL_BOOST_EDGE) * abs_ratio;
-    speed.0 = (speed.0 * boost).min(BALL_MAX_SPEED);
-
+    let ball_boost = BALL_BOOST_CENTER - (BALL_BOOST_CENTER - BALL_BOOST_EDGE) * abs_ratio;
+    speed.0 = (speed.0 * ball_boost).min(BALL_MAX_SPEED);
     velocity.0 = direction * speed.0;
+
+    // Paddle speed ball_boost
+    let paddle_boost = 1. + (ball_boost - 1.) * PADDLE_BOOST_RATIO;
+    paddle_speed.0 = (paddle_speed.0 * paddle_boost).min(PADDLE_MAX_SPEED);
 }

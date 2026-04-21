@@ -2,6 +2,7 @@ pub mod ball;
 pub mod map;
 pub mod paddle;
 pub mod scoring;
+pub mod shared;
 
 use crate::constants::INIT_HEALTH;
 use crate::game::paddle::InGameEntity;
